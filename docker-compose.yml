@@ -1,0 +1,44 @@
+version: "3.9"
+
+networks:
+  backend:
+    driver: bridge
+    name: ${DOCKER_NETWORK}
+
+volumes:
+  postgres:
+    driver: local
+
+services:
+### golang ####################
+  server:
+    image: golang:1.18.1-alpine
+    working_dir: /server
+    container_name: money-liff-server
+    volumes:
+      - .:/server
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    entrypoint: go run main.go
+    restart: always
+    networks:
+      - backend
+
+### postgres ####################
+  postgres:
+    image: postgres:14.2-alpine
+    container_name: money-liff-posgres
+    ports:
+      - "15432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres:/var/lib/postgresql/data/pgdata
+    restart: always
+    networks:
+      - backend
