@@ -10,12 +10,12 @@ var validate *validator.Validate
 
 type User struct {
 	Id        int            `json:"id" validate:"-" gorm:"primaryKey"`
-	LineId    string         `json:"line_id" validate:"required,alphanum"`
-	Name      string         `json:"name" validate:"required,alphanum"`
+	LineId    string         `json:"line_id" validate:"required,alphanum" binding:"required"`
+	Name      string         `json:"name" validate:"required,alphanum" binding:"required"`
 	AvatarUrl string         `json:"avatar_url" validate:"-"`
-	CreatedAt time.Time      `json:"created_at" validate:"-"`
-	UpdatedAt time.Time      `json:"updated_at" validate:"-"`
-	DeletedAt gorm.DeletedAt `json:"deleted_at" validate:"-" gorm:"index"`
+	CreatedAt time.Time      `json:"created_at,omitempty" validate:"-"`
+	UpdatedAt time.Time      `json:"updated_at,omitempty" validate:"-"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty" validate:"-"`
 }
 
 func (u *User) GetLineId() string {
@@ -24,8 +24,7 @@ func (u *User) GetLineId() string {
 
 func (u *User) Validate() error {
 	validate = validator.New()
-	err := validate.Struct(u)
-	if err != nil {
+	if err := validate.Struct(u); err != nil {
 		return err
 	}
 	return nil

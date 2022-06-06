@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"github.com/ZhuoYIZIA/money-liff-api/pkg/log"
 	_ "github.com/joho/godotenv/autoload"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -13,6 +14,9 @@ func Connection() *gorm.DB {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		//TODO: error handle
+		logger := log.TeeDefault()
+		logger.Error("db connection error: ", log.String("message", err.Error()))
+		panic("db connection error.")
 	}
 
 	return db
