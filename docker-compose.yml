@@ -21,7 +21,7 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
-    entrypoint: go run main.go
+    entrypoint: go run cmd/server/main.go
     restart: always
     networks:
       - backend
