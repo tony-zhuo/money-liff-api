@@ -3,8 +3,13 @@ export
 APP_DSN := postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=disable
 MIGRATE := docker run -v $(shell pwd)/migrations:/migrations --network ${DOCKER_NETWORK} migrate/migrate -path=/migrations/ -database "$(APP_DSN)"
 
-test:
-	@echo $(APP_DSN)
+run:
+	@echo "Running go..."
+	@docker-compose up
+
+down:
+	@echo "Shutdown docker container"
+	@docker-compose down
 
 .PHONY: migrate
 migrate: ## run all new database migrations
