@@ -39,23 +39,21 @@ func GetUserOrRegister(c *gin.Context) {
 		log.String("name", user.Name),
 		log.String("avatar url", user.AvatarUrl))
 
-	defer func() {
-		if err := recover(); err != nil {
-			c.JSON(http.StatusInternalServerError, unity.Exception{
-				Status:  false,
-				Code:    http.StatusInternalServerError,
-				Message: "server error",
-			})
-			return
-		}
-	}()
-	service := NewService(&user)
-	result := service.FirstOrCreate()
-	c.JSON(http.StatusOK, unity.OkResponse{
-		Status:  true,
-		Code:    http.StatusOK,
-		Message: "success",
-		Data:    result,
-	})
-	return
+	service := NewService()
+	if err := service.CreateIfNotFound(&user); err != nil {
+		c.JSON(http.StatusInternalServerError, unity.Exception{
+			Status:  false,
+			Code:    http.StatusInternalServerError,
+			Message: "server error",
+		})
+		return
+	} else {
+		c.JSON(http.StatusOK, unity.OkResponse{
+			Status:  true,
+			Code:    http.StatusOK,
+			Message: "success",
+			Data:    user,
+		})
+		return
+	}
 }

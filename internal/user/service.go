@@ -6,30 +6,24 @@ import (
 )
 
 type Service interface {
-	FirstOrCreate() *entity.User
+	CreateIfNotFound(user *entity.User) error
 }
 
 type service struct {
 	repo   Repository
-	user   *entity.User
 	logger *log.Logger
 }
 
-func NewService(user *entity.User) Service {
+func NewService() Service {
 	return &service{
 		repo:   NewRepository(),
-		user:   user,
 		logger: log.TeeDefault(),
 	}
 }
 
-func (s *service) FirstOrCreate() *entity.User {
-	if result := s.repo.Get(s.user.LineId); result == nil {
-		if err := s.repo.Create(s.user); err != nil {
-			panic(err.Error())
-		}
-	} else {
-		s.user = result
+func (s *service) CreateIfNotFound(user *entity.User) error {
+	if err := s.repo.FirstOrCreate(user); err != nil {
+		return err
 	}
-	return s.user
+	return nil
 }

@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	Get(lineId string) *entity.User
 	Create(user *entity.User) error
+	FirstOrCreate(user *entity.User) error
 	Update(user *entity.User) error
 }
 
@@ -38,6 +39,14 @@ func (r *repository) Get(lineId string) *entity.User {
 func (r *repository) Create(user *entity.User) error {
 	if result := r.db.Create(user); result.Error != nil {
 		r.logger.Error("user repo create err: ", log.Any("err", result.Error))
+		return result.Error
+	}
+	return nil
+}
+
+func (r *repository) FirstOrCreate(user *entity.User) error {
+	if result := r.db.Where(entity.User{LineId: user.LineId}).FirstOrCreate(user); result.Error != nil {
+		r.logger.Error("user repo FirstOrCreate err: ", log.Any("err", result.Error))
 		return result.Error
 	}
 	return nil
