@@ -15,7 +15,7 @@ func InitRoutes() *gin.Engine {
 
 	v1Router := router.Group("v1")
 	{
-		user.AuthRoutes(v1Router)
+		user.Routes(v1Router)
 	}
 
 	return router

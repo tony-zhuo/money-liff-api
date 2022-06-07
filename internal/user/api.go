@@ -4,6 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthRoutes(route *gin.RouterGroup) {
+func Routes(route *gin.RouterGroup) {
 	route.POST("/user/register", GetUserOrRegister)
 }
