@@ -7,6 +7,7 @@ import (
 
 type Service interface {
 	CreateIfNotFound(user *entity.User) error
+	GetUserByLineId(lineId string) *entity.User
 }
 
 type service struct {
@@ -26,4 +27,8 @@ func (s *service) CreateIfNotFound(user *entity.User) error {
 		return err
 	}
 	return nil
+}
+
+func (s *service) GetUserByLineId(lineId string) *entity.User {
+	return s.repo.Get(lineId)
 }
