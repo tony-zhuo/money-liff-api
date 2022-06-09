@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/ZhuoYIZIA/money-liff-api/internal/group"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/user"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,7 @@ func InitRoutes() *gin.Engine {
 	v1Router := router.Group("v1")
 	{
 		user.Routes(v1Router)
+		group.Routes(v1Router)
 	}
 
 	return router
