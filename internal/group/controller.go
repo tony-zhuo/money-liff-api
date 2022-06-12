@@ -11,7 +11,6 @@ import (
 )
 
 var logger = log.TeeDefault()
-var groupService = NewService()
 
 func Index(c *gin.Context) {
 	userData := c.MustGet("userData").(*entity.User)
@@ -20,6 +19,7 @@ func Index(c *gin.Context) {
 	sort := c.DefaultQuery("sort", "id")
 	page, _ := strconv.ParseInt(queryPage, 10, 32)
 	perPage, _ := strconv.ParseInt(queryPerPage, 10, 32)
+	groupService := NewService()
 
 	pagination, err := groupService.GetListByUserWithPagination(userData, int(page), int(perPage), sort)
 	if err != nil {
@@ -35,6 +35,7 @@ func Index(c *gin.Context) {
 
 func Create(c *gin.Context) {
 	userData := c.MustGet("userData").(*entity.User)
+	groupService := NewService()
 
 	group := entity.Group{}
 	if err := c.Bind(&group); err != nil {
@@ -68,7 +69,9 @@ func Create(c *gin.Context) {
 
 func Update(c *gin.Context) {
 	userData := c.MustGet("userData").(*entity.User)
+	groupData := c.MustGet("groupData").(*entity.Group)
 	uuid := c.Param("uuid")
+	groupService := NewService()
 	logger.Info("Group update controller",
 		log.String("line-id", userData.LineId),
 		log.String("uuid", uuid))
@@ -86,20 +89,13 @@ func Update(c *gin.Context) {
 		return
 	}
 
-	group := groupService.GetGroupByUUID(uuid)
-	if group == nil {
-		res := exception.NotFound("Group not found.")
-		c.JSON(http.StatusNotFound, res)
-		return
-	}
-
-	if isAdmin := groupService.CheckUserIsAdmin(group, userData); !isAdmin {
+	if isAdmin := groupService.CheckUserIsAdmin(groupData, userData); !isAdmin {
 		res := exception.Unauthorized("The user is not admin.")
 		c.JSON(http.StatusUnauthorized, res)
 		return
 	}
 
-	if err := groupService.UpdateGroupById(&request, group.Id); err != nil {
+	if err := groupService.UpdateGroupById(&request, groupData.Id); err != nil {
 		res := exception.InternalServerError("")
 		c.JSON(http.StatusInternalServerError, res)
 		return
@@ -117,25 +113,20 @@ func Update(c *gin.Context) {
 
 func Delete(c *gin.Context) {
 	userData := c.MustGet("userData").(*entity.User)
+	groupData := c.MustGet("groupData").(*entity.Group)
 	uuid := c.Param("uuid")
+	groupService := NewService()
 	logger.Info("Group update controller",
 		log.String("line-id", userData.LineId),
 		log.String("uuid", uuid))
 
-	group := groupService.GetGroupByUUID(uuid)
-	if group == nil {
-		res := exception.NotFound("Group not found.")
-		c.JSON(http.StatusNotFound, res)
-		return
-	}
-
-	if isAdmin := groupService.CheckUserIsAdmin(group, userData); !isAdmin {
+	if isAdmin := groupService.CheckUserIsAdmin(groupData, userData); !isAdmin {
 		res := exception.Unauthorized("The user is not admin.")
 		c.JSON(http.StatusUnauthorized, res)
 		return
 	}
 
-	if err := groupService.DeleteGroupById(group.Id); err != nil {
+	if err := groupService.DeleteGroupById(groupData.Id); err != nil {
 		res := exception.InternalServerError("")
 		c.JSON(http.StatusInternalServerError, res)
 		return
