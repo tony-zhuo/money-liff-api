@@ -30,3 +30,15 @@ func (g *Group) Validate() error {
 	}
 	return nil
 }
+
+type GroupParams struct {
+	UUID string `json:"uuid" validate:"uuid"`
+}
+
+func (g *GroupParams) Validate() error {
+	validate := validator.New()
+	if err := validate.Struct(g); err != nil {
+		return err
+	}
+	return nil
+}
