@@ -14,6 +14,7 @@ type Service interface {
 	GetGroupByUUID(uuid string) *entity.Group
 	CheckUserIsAdmin(group *entity.Group, user *entity.User) bool
 	UpdateGroupById(group *entity.Group, id int) error
+	DeleteGroupById(id int) error
 }
 
 type service struct {
@@ -67,6 +68,13 @@ func (s *service) CheckUserIsAdmin(group *entity.Group, user *entity.User) bool 
 
 func (s *service) UpdateGroupById(group *entity.Group, id int) error {
 	if err := s.repo.UpdateGroupById(group, id); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *service) DeleteGroupById(id int) error {
+	if err := s.repo.DeleteGroupById(id); err != nil {
 		return err
 	}
 	return nil

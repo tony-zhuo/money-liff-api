@@ -160,3 +160,47 @@ func Update(c *gin.Context) {
 		return
 	}
 }
+
+func Delete(c *gin.Context) {
+	lineId := c.GetHeader("Line-Id")
+	uuid := c.Param("uuid")
+	logger.Info("Group update controller",
+		log.String("line-id", lineId),
+		log.String("uuid", uuid))
+
+	if lineId == "" {
+		res := exception.Unauthorized("")
+		c.JSON(http.StatusUnauthorized, res)
+		return
+	}
+
+	userData := userService.GetUserByLineId(lineId)
+	if userData == nil {
+		res := exception.Unauthorized("")
+		c.JSON(http.StatusUnauthorized, res)
+		return
+	}
+
+	group := groupService.GetGroupByUUID(uuid)
+	if group == nil {
+		res := exception.NotFound("Group not found.")
+		c.JSON(http.StatusNotFound, res)
+		return
+	}
+
+	if isAdmin := groupService.CheckUserIsAdmin(group, userData); !isAdmin {
+		res := exception.Unauthorized("The user is not admin.")
+		c.JSON(http.StatusUnauthorized, res)
+		return
+	}
+
+	if err := groupService.DeleteGroupById(group.Id); err != nil {
+		res := exception.InternalServerError("")
+		c.JSON(http.StatusInternalServerError, res)
+		return
+	} else {
+		res := response.Ok("Delete success.", nil)
+		c.JSON(http.StatusOK, res)
+		return
+	}
+}

@@ -14,6 +14,7 @@ type Repository interface {
 	GetByUUID(uuid string) *entity.Group
 	GetAllDataCountByUser(user *entity.User) int
 	UpdateGroupById(group *entity.Group, id int) error
+	DeleteGroupById(id int) error
 }
 
 type repository struct {
@@ -74,6 +75,13 @@ func (r *repository) CreateByUser(group *entity.Group, user *entity.User) error 
 
 func (r *repository) UpdateGroupById(group *entity.Group, id int) error {
 	if result := r.db.Model(&entity.Group{Id: id}).Updates(group); result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+func (r *repository) DeleteGroupById(id int) error {
+	if result := r.db.Delete(&entity.Group{}, id); result.Error != nil {
 		return result.Error
 	}
 	return nil
