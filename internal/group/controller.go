@@ -98,3 +98,65 @@ func Create(c *gin.Context) {
 	}
 
 }
+
+func Update(c *gin.Context) {
+	lineId := c.GetHeader("Line-Id")
+	uuid := c.Param("uuid")
+	logger.Info("Group update controller",
+		log.String("line-id", lineId),
+		log.String("uuid", uuid))
+
+	if lineId == "" {
+		res := exception.Unauthorized("")
+		c.JSON(http.StatusUnauthorized, res)
+		return
+	}
+
+	userData := userService.GetUserByLineId(lineId)
+	if userData == nil {
+		res := exception.Unauthorized("")
+		c.JSON(http.StatusUnauthorized, res)
+		return
+	}
+
+	request := entity.Group{}
+	if err := c.Bind(&request); err != nil {
+		res := exception.BadRequest("")
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	if err := request.Validate(); err != nil {
+		res := exception.BadRequest(err.Error())
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	group := groupService.GetGroupByUUID(uuid)
+	if group == nil {
+		res := exception.NotFound("Group not found.")
+		c.JSON(http.StatusNotFound, res)
+		return
+	}
+
+	if isAdmin := groupService.CheckUserIsAdmin(group, userData); !isAdmin {
+		res := exception.Unauthorized("The user is not admin.")
+		c.JSON(http.StatusUnauthorized, res)
+		return
+	}
+
+	if err := groupService.UpdateGroupById(&request, group.Id); err != nil {
+		res := exception.InternalServerError("")
+		c.JSON(http.StatusInternalServerError, res)
+		return
+	} else {
+		res := response.Ok("Update success.", entity.Group{
+			UUID:      uuid,
+			Name:      request.Name,
+			UserLimit: request.UserLimit,
+			ImageUrl:  request.ImageUrl,
+		})
+		c.JSON(http.StatusOK, res)
+		return
+	}
+}

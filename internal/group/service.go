@@ -11,6 +11,9 @@ import (
 type Service interface {
 	GetListByUserWithPagination(user *entity.User, offset, limit int, sort string) (*response.Pagination, error)
 	GenerateUUIDAndCreateByUser(group *entity.Group, user *entity.User) error
+	GetGroupByUUID(uuid string) *entity.Group
+	CheckUserIsAdmin(group *entity.Group, user *entity.User) bool
+	UpdateGroupById(group *entity.Group, id int) error
 }
 
 type service struct {
@@ -49,6 +52,21 @@ func (s *service) GenerateUUIDAndCreateByUser(group *entity.Group, user *entity.
 	}
 	group.UUID = u1.String()
 	if err := s.repo.CreateByUser(group, user); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *service) GetGroupByUUID(uuid string) *entity.Group {
+	return s.repo.GetByUUID(uuid)
+}
+
+func (s *service) CheckUserIsAdmin(group *entity.Group, user *entity.User) bool {
+	return group.AdminUserId == user.Id
+}
+
+func (s *service) UpdateGroupById(group *entity.Group, id int) error {
+	if err := s.repo.UpdateGroupById(group, id); err != nil {
 		return err
 	}
 	return nil

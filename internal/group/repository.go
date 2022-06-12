@@ -1,6 +1,7 @@
 package group
 
 import (
+	"errors"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/entity"
 	"github.com/ZhuoYIZIA/money-liff-api/pkg/database"
 	"github.com/ZhuoYIZIA/money-liff-api/pkg/log"
@@ -10,7 +11,9 @@ import (
 type Repository interface {
 	ListByUser(user *entity.User, offset, limit int, sort string) (*[]entity.Group, error)
 	CreateByUser(group *entity.Group, user *entity.User) error
+	GetByUUID(uuid string) *entity.Group
 	GetAllDataCountByUser(user *entity.User) int
+	UpdateGroupById(group *entity.Group, id int) error
 }
 
 type repository struct {
@@ -51,10 +54,26 @@ func (r *repository) GetAllDataCountByUser(user *entity.User) int {
 	return int(count)
 }
 
+func (r *repository) GetByUUID(uuid string) *entity.Group {
+	group := entity.Group{}
+	result := r.db.Where("uuid = ?", uuid).First(&group)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil
+	}
+	return &group
+}
+
 func (r *repository) CreateByUser(group *entity.Group, user *entity.User) error {
 	group.Users = []*entity.User{user}
 	group.AdminUserId = user.Id
 	if result := r.db.Create(group); result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+func (r *repository) UpdateGroupById(group *entity.Group, id int) error {
+	if result := r.db.Model(&entity.Group{Id: id}).Updates(group); result.Error != nil {
 		return result.Error
 	}
 	return nil
