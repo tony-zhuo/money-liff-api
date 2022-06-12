@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/ZhuoYIZIA/money-liff-api/internal/entity"
+	"github.com/ZhuoYIZIA/money-liff-api/internal/unity/exception"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/unity/response"
 	"github.com/ZhuoYIZIA/money-liff-api/pkg/log"
 	"github.com/gin-gonic/gin"
@@ -15,7 +16,7 @@ func GetUserOrRegister(c *gin.Context) {
 	if err := c.Bind(&user); err != nil {
 		errMsg := err.Error()
 		logger.Error("user register API bind error: ", log.String("err", errMsg))
-		res := response.BadRequest(errMsg)
+		res := exception.BadRequest(errMsg)
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
@@ -23,7 +24,7 @@ func GetUserOrRegister(c *gin.Context) {
 	if err := user.Validate(); err != nil {
 		errMsg := err.Error()
 		logger.Error("user register API request validate error: ", log.String("err", errMsg))
-		res := response.BadRequest(errMsg)
+		res := exception.BadRequest(errMsg)
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
@@ -35,7 +36,7 @@ func GetUserOrRegister(c *gin.Context) {
 
 	service := NewService()
 	if err := service.CreateIfNotFound(&user); err != nil {
-		res := response.InternalServerError("")
+		res := exception.InternalServerError("")
 		c.JSON(http.StatusInternalServerError, res)
 		return
 	} else {

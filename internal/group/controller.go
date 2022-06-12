@@ -2,6 +2,7 @@ package group
 
 import (
 	"github.com/ZhuoYIZIA/money-liff-api/internal/entity"
+	"github.com/ZhuoYIZIA/money-liff-api/internal/unity/exception"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/unity/response"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/user"
 	"github.com/ZhuoYIZIA/money-liff-api/pkg/log"
@@ -23,7 +24,7 @@ func Index(c *gin.Context) {
 	perPage, _ := strconv.ParseInt(queryPerPage, 10, 32)
 
 	if lineId == "" {
-		res := response.Unauthorized("")
+		res := exception.Unauthorized("")
 		c.JSON(http.StatusUnauthorized, res)
 		return
 	}
@@ -32,14 +33,14 @@ func Index(c *gin.Context) {
 
 	userData := userService.GetUserByLineId(lineId)
 	if userData == nil {
-		res := response.Unauthorized("")
+		res := exception.Unauthorized("")
 		c.JSON(http.StatusUnauthorized, res)
 		return
 	}
 
 	pagination, err := groupService.GetListByUserWithPagination(userData, int(page), int(perPage), sort)
 	if err != nil {
-		res := response.InternalServerError(err.Error())
+		res := exception.InternalServerError(err.Error())
 		c.JSON(http.StatusInternalServerError, res)
 		return
 	} else {
@@ -54,7 +55,7 @@ func Create(c *gin.Context) {
 
 	lineId := c.GetHeader("Line-Id")
 	if lineId == "" {
-		res := response.Unauthorized("")
+		res := exception.Unauthorized("")
 		c.JSON(http.StatusUnauthorized, res)
 		return
 	}
@@ -63,14 +64,14 @@ func Create(c *gin.Context) {
 
 	userData := userService.GetUserByLineId(lineId)
 	if userData == nil {
-		res := response.Unauthorized("")
+		res := exception.Unauthorized("")
 		c.JSON(http.StatusUnauthorized, res)
 		return
 	}
 
 	group := entity.Group{}
 	if err := c.Bind(&group); err != nil {
-		res := response.BadRequest("")
+		res := exception.BadRequest("")
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
@@ -81,13 +82,13 @@ func Create(c *gin.Context) {
 		log.String("ImageUrl", group.ImageUrl))
 
 	if err := group.Validate(); err != nil {
-		res := response.BadRequest(err.Error())
+		res := exception.BadRequest(err.Error())
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	if err := groupService.GenerateUUIDAndCreateByUser(&group, userData); err != nil {
-		res := response.InternalServerError(err.Error())
+		res := exception.InternalServerError(err.Error())
 		c.JSON(http.StatusInternalServerError, res)
 		return
 	} else {
