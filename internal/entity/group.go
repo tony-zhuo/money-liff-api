@@ -16,7 +16,7 @@ type Group struct {
 	CreatedAt   time.Time      `json:"-" validate:"-"`
 	UpdatedAt   time.Time      `json:"-" validate:"-"`
 	DeletedAt   gorm.DeletedAt `json:"-" validate:"-"`
-	Users       []*User        `gorm:"many2many:user_groups;"`
+	Users       []*User        `json:"-" gorm:"many2many:user_groups;"`
 }
 
 func (g *Group) GetUuid() string {

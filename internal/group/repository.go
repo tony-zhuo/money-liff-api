@@ -8,7 +8,9 @@ import (
 )
 
 type Repository interface {
+	ListByUser(user *entity.User, offset, limit int, sort string) (*[]entity.Group, error)
 	CreateByUser(group *entity.Group) error
+	GetAllDataCountByUser(user *entity.User) int
 }
 
 type repository struct {
@@ -21,6 +23,32 @@ func NewRepository() Repository {
 		db:     database.Connection(),
 		logger: log.TeeDefault(),
 	}
+}
+
+func (r *repository) ListByUser(user *entity.User, page, perPage int, sort string) (*[]entity.Group, error) {
+	var groups *[]entity.Group
+
+	err := r.db.
+		Model(user).
+		Order(sort).
+		Offset((page - 1) * perPage).
+		Limit(perPage).
+		Association("Groups").
+		Find(&groups)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return groups, nil
+}
+
+func (r *repository) GetAllDataCountByUser(user *entity.User) int {
+	count := r.db.
+		Model(user).
+		Association("Groups").
+		Count()
+	return int(count)
 }
 
 func (r *repository) CreateByUser(group *entity.Group) error {

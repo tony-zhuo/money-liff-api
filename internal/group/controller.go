@@ -7,24 +7,47 @@ import (
 	"github.com/ZhuoYIZIA/money-liff-api/pkg/log"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 var logger = log.TeeDefault()
 var groupService = NewService()
 var userService = user.NewService()
 
-//func Index(c *gin.Context) {
-//	lineId := c.GetHeader("Line-Id")
-//	if lineId == "" {
-//		res := response.Unauthorized("")
-//		c.JSON(http.StatusUnauthorized, res)
-//		return
-//	}
-//page := c.DefaultQuery("page", "1")
-//perPage := c.DefaultQuery("per_page", "10")
-//sort := c.Query("sort")
+func Index(c *gin.Context) {
+	lineId := c.GetHeader("Line-Id")
+	queryPage := c.DefaultQuery("page", "1")
+	queryPerPage := c.DefaultQuery("per_page", "10")
+	sort := c.DefaultQuery("sort", "id")
+	page, _ := strconv.ParseInt(queryPage, 10, 32)
+	perPage, _ := strconv.ParseInt(queryPerPage, 10, 32)
 
-//}
+	if lineId == "" {
+		res := response.Unauthorized("")
+		c.JSON(http.StatusUnauthorized, res)
+		return
+	}
+
+	logger.Info("group create header", log.String("line id", lineId))
+
+	userData := userService.GetUserByLineId(lineId)
+	if userData == nil {
+		res := response.Unauthorized("")
+		c.JSON(http.StatusUnauthorized, res)
+		return
+	}
+
+	pagination, err := groupService.GetListByUserWithPagination(userData, int(page), int(perPage), sort)
+	if err != nil {
+		res := response.InternalServerError(err.Error())
+		c.JSON(http.StatusInternalServerError, res)
+		return
+	} else {
+		res := response.List(*pagination, "")
+		c.JSON(http.StatusOK, res)
+		return
+	}
+}
 
 func Create(c *gin.Context) {
 	logger.Info("group create")

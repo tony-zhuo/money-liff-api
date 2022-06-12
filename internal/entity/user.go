@@ -16,7 +16,7 @@ type User struct {
 	CreatedAt time.Time      `json:"-" validate:"-"`
 	UpdatedAt time.Time      `json:"-" validate:"-"`
 	DeletedAt gorm.DeletedAt `json:"-" validate:"-"`
-	Groups    []Group        `gorm:"many2many:user_groups;"`
+	Groups    []Group        `json:"-" gorm:"many2many:user_groups;"`
 }
 
 func (u *User) GetLineId() string {

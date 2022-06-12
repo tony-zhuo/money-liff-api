@@ -10,20 +10,19 @@ type OkResponse struct {
 	Data    interface{} `json:"data"`
 }
 
-type Exception struct {
-	Status  bool   `json:"status"`
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+type ListResponse struct {
+	Status  bool       `json:"status"`
+	Code    int        `json:"code"`
+	Message string     `json:"message"`
+	Data    Pagination `json:"data"`
 }
 
-// Error is required by the error interface.
-func (e Exception) Error() string {
-	return e.Message
-}
-
-// StatusCode is required by routing.HTTPError interface.
-func (e Exception) StatusCode() int {
-	return e.Code
+type Pagination struct {
+	Page       int         `json:"page"`
+	PerPage    int         `json:"per_page"`
+	TotalPage  int         `json:"total_page"`
+	TotalCount int         `json:"total_count"`
+	Result     interface{} `json:"result"`
 }
 
 func Ok(msg string, data interface{}) OkResponse {
@@ -47,6 +46,19 @@ func Created(msg string) OkResponse {
 		Code:    http.StatusCreated,
 		Message: msg,
 		Data:    nil,
+	}
+}
+
+// List 200 分頁 response
+func List(p Pagination, msg string) ListResponse {
+	if msg == "" {
+		msg = "Success."
+	}
+	return ListResponse{
+		Status:  true,
+		Code:    http.StatusOK,
+		Message: msg,
+		Data:    p,
 	}
 }
 
@@ -96,4 +108,20 @@ func InternalServerError(msg string) Exception {
 		Code:    500,
 		Message: msg,
 	}
+}
+
+type Exception struct {
+	Status  bool   `json:"status"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
+// Error is required by the error interface.
+func (e Exception) Error() string {
+	return e.Message
+}
+
+// StatusCode is required by routing.HTTPError interface.
+func (e Exception) StatusCode() int {
+	return e.Code
 }
