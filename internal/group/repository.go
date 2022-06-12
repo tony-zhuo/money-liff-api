@@ -9,7 +9,7 @@ import (
 
 type Repository interface {
 	ListByUser(user *entity.User, offset, limit int, sort string) (*[]entity.Group, error)
-	CreateByUser(group *entity.Group) error
+	CreateByUser(group *entity.Group, user *entity.User) error
 	GetAllDataCountByUser(user *entity.User) int
 }
 
@@ -51,7 +51,9 @@ func (r *repository) GetAllDataCountByUser(user *entity.User) int {
 	return int(count)
 }
 
-func (r *repository) CreateByUser(group *entity.Group) error {
+func (r *repository) CreateByUser(group *entity.Group, user *entity.User) error {
+	group.Users = []*entity.User{user}
+	group.AdminUserId = user.Id
 	if result := r.db.Create(group); result.Error != nil {
 		return result.Error
 	}

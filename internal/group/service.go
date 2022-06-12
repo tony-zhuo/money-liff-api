@@ -48,9 +48,7 @@ func (s *service) GenerateUUIDAndCreateByUser(group *entity.Group, user *entity.
 		return err
 	}
 	group.UUID = u1.String()
-	group.Users = []*entity.User{user}
-	group.AdminUserId = user.Id
-	if err := s.repo.CreateByUser(group); err != nil {
+	if err := s.repo.CreateByUser(group, user); err != nil {
 		return err
 	}
 	return nil
