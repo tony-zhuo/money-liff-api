@@ -4,7 +4,6 @@ import (
 	"github.com/ZhuoYIZIA/money-liff-api/internal/entity"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/unity/exception"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/unity/response"
-	"github.com/ZhuoYIZIA/money-liff-api/internal/user"
 	"github.com/ZhuoYIZIA/money-liff-api/pkg/log"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -13,30 +12,14 @@ import (
 
 var logger = log.TeeDefault()
 var groupService = NewService()
-var userService = user.NewService()
 
 func Index(c *gin.Context) {
-	lineId := c.GetHeader("Line-Id")
+	userData := c.MustGet("userData").(*entity.User)
 	queryPage := c.DefaultQuery("page", "1")
 	queryPerPage := c.DefaultQuery("per_page", "10")
 	sort := c.DefaultQuery("sort", "id")
 	page, _ := strconv.ParseInt(queryPage, 10, 32)
 	perPage, _ := strconv.ParseInt(queryPerPage, 10, 32)
-
-	if lineId == "" {
-		res := exception.Unauthorized("")
-		c.JSON(http.StatusUnauthorized, res)
-		return
-	}
-
-	logger.Info("group create header", log.String("line id", lineId))
-
-	userData := userService.GetUserByLineId(lineId)
-	if userData == nil {
-		res := exception.Unauthorized("")
-		c.JSON(http.StatusUnauthorized, res)
-		return
-	}
 
 	pagination, err := groupService.GetListByUserWithPagination(userData, int(page), int(perPage), sort)
 	if err != nil {
@@ -51,23 +34,7 @@ func Index(c *gin.Context) {
 }
 
 func Create(c *gin.Context) {
-	logger.Info("group create")
-
-	lineId := c.GetHeader("Line-Id")
-	if lineId == "" {
-		res := exception.Unauthorized("")
-		c.JSON(http.StatusUnauthorized, res)
-		return
-	}
-
-	logger.Info("group create header", log.String("line id", lineId))
-
-	userData := userService.GetUserByLineId(lineId)
-	if userData == nil {
-		res := exception.Unauthorized("")
-		c.JSON(http.StatusUnauthorized, res)
-		return
-	}
+	userData := c.MustGet("userData").(*entity.User)
 
 	group := entity.Group{}
 	if err := c.Bind(&group); err != nil {
@@ -100,24 +67,11 @@ func Create(c *gin.Context) {
 }
 
 func Update(c *gin.Context) {
-	lineId := c.GetHeader("Line-Id")
+	userData := c.MustGet("userData").(*entity.User)
 	uuid := c.Param("uuid")
 	logger.Info("Group update controller",
-		log.String("line-id", lineId),
+		log.String("line-id", userData.LineId),
 		log.String("uuid", uuid))
-
-	if lineId == "" {
-		res := exception.Unauthorized("")
-		c.JSON(http.StatusUnauthorized, res)
-		return
-	}
-
-	userData := userService.GetUserByLineId(lineId)
-	if userData == nil {
-		res := exception.Unauthorized("")
-		c.JSON(http.StatusUnauthorized, res)
-		return
-	}
 
 	request := entity.Group{}
 	if err := c.Bind(&request); err != nil {
@@ -162,24 +116,11 @@ func Update(c *gin.Context) {
 }
 
 func Delete(c *gin.Context) {
-	lineId := c.GetHeader("Line-Id")
+	userData := c.MustGet("userData").(*entity.User)
 	uuid := c.Param("uuid")
 	logger.Info("Group update controller",
-		log.String("line-id", lineId),
+		log.String("line-id", userData.LineId),
 		log.String("uuid", uuid))
-
-	if lineId == "" {
-		res := exception.Unauthorized("")
-		c.JSON(http.StatusUnauthorized, res)
-		return
-	}
-
-	userData := userService.GetUserByLineId(lineId)
-	if userData == nil {
-		res := exception.Unauthorized("")
-		c.JSON(http.StatusUnauthorized, res)
-		return
-	}
 
 	group := groupService.GetGroupByUUID(uuid)
 	if group == nil {
@@ -204,3 +145,31 @@ func Delete(c *gin.Context) {
 		return
 	}
 }
+
+//func UserList(c *gin.Context) {
+//	lineId := c.GetHeader("Line-Id")
+//	uuid := c.Param("group_uuid")
+//	logger.Info("Group controller UserList",
+//		log.String("line-id", lineId),
+//		log.String("group_uuid", uuid))
+//
+//	if lineId == "" {
+//		res := exception.Unauthorized("")
+//		c.JSON(http.StatusUnauthorized, res)
+//		return
+//	}
+//
+//	userData := userService.GetUserByLineId(lineId)
+//	if userData == nil {
+//		res := exception.Unauthorized("")
+//		c.JSON(http.StatusUnauthorized, res)
+//		return
+//	}
+//
+//	group := groupService.GetGroupByUUID(uuid)
+//	if group == nil {
+//		res := exception.NotFound("Group not found.")
+//		c.JSON(http.StatusNotFound, res)
+//		return
+//	}
+//}

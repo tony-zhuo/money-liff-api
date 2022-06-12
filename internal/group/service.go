@@ -15,6 +15,7 @@ type Service interface {
 	CheckUserIsAdmin(group *entity.Group, user *entity.User) bool
 	UpdateGroupById(group *entity.Group, id int) error
 	DeleteGroupById(id int) error
+	GetUserListInGroup(group *entity.Group) (*[]entity.User, error)
 }
 
 type service struct {
@@ -79,3 +80,12 @@ func (s *service) DeleteGroupById(id int) error {
 	}
 	return nil
 }
+
+func (s *service) GetUserListInGroup(group *entity.Group) (*[]entity.User, error) {
+	users, err := s.repo.GetUserListInGroup(group)
+	return users, err
+}
+
+//func (s *service) CheckUserIsInGroup(group *entity.Group, user *entity.User) bool {
+//
+//}

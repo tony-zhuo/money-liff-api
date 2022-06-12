@@ -15,6 +15,7 @@ type Repository interface {
 	GetAllDataCountByUser(user *entity.User) int
 	UpdateGroupById(group *entity.Group, id int) error
 	DeleteGroupById(id int) error
+	GetUserListInGroup(group *entity.Group) (*[]entity.User, error)
 }
 
 type repository struct {
@@ -85,4 +86,17 @@ func (r *repository) DeleteGroupById(id int) error {
 		return result.Error
 	}
 	return nil
+}
+
+func (r *repository) GetUserListInGroup(group *entity.Group) (*[]entity.User, error) {
+	var users *[]entity.User
+	err := r.db.
+		Model(group).
+		Association("users").
+		Find(users)
+
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
