@@ -8,10 +8,9 @@ import (
 )
 
 // ParamsCheckMiddleware check group uuid exit
-func ParamsCheckMiddleware() func(c *gin.Context) {
+func ParamsCheckMiddleware(service Service) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		groupUuid := c.Param("group_uuid")
-		groupService := NewService()
 
 		params := entity.GroupParams{UUID: groupUuid}
 		if err := params.Validate(); err != nil {
@@ -21,7 +20,7 @@ func ParamsCheckMiddleware() func(c *gin.Context) {
 			return
 		}
 
-		groupData := groupService.GetGroupByUUID(groupUuid)
+		groupData := service.GetGroupByUUID(groupUuid)
 		if groupData == nil {
 			res := exception.NotFound("Group not found.")
 			c.JSON(http.StatusNotFound, res)

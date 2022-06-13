@@ -15,10 +15,10 @@ type service struct {
 	logger *log.Logger
 }
 
-func NewService() Service {
+func NewService(repo Repository, logger *log.Logger) Service {
 	return &service{
-		repo:   NewRepository(),
-		logger: log.TeeDefault(),
+		repo:   repo,
+		logger: logger,
 	}
 }
 

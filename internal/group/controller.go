@@ -10,18 +10,20 @@ import (
 	"strconv"
 )
 
-var logger = log.TeeDefault()
+type Resource struct {
+	service Service
+	logger  *log.Logger
+}
 
-func Index(c *gin.Context) {
+func (r *Resource) Index(c *gin.Context) {
 	userData := c.MustGet("userData").(*entity.User)
 	queryPage := c.DefaultQuery("page", "1")
 	queryPerPage := c.DefaultQuery("per_page", "10")
 	sort := c.DefaultQuery("sort", "id")
 	page, _ := strconv.ParseInt(queryPage, 10, 32)
 	perPage, _ := strconv.ParseInt(queryPerPage, 10, 32)
-	groupService := NewService()
 
-	pagination, err := groupService.GetListByUserWithPagination(userData, int(page), int(perPage), sort)
+	pagination, err := r.service.GetListByUserWithPagination(userData, int(page), int(perPage), sort)
 	if err != nil {
 		res := exception.InternalServerError(err.Error())
 		c.JSON(http.StatusInternalServerError, res)
@@ -33,9 +35,8 @@ func Index(c *gin.Context) {
 	}
 }
 
-func Create(c *gin.Context) {
+func (r *Resource) Create(c *gin.Context) {
 	userData := c.MustGet("userData").(*entity.User)
-	groupService := NewService()
 
 	group := entity.Group{}
 	if err := c.Bind(&group); err != nil {
@@ -44,7 +45,7 @@ func Create(c *gin.Context) {
 		return
 	}
 
-	logger.Info("group create request bind",
+	r.logger.Info("group create request bind",
 		log.String("Name", group.Name),
 		log.Int("UserLimit", group.UserLimit),
 		log.String("ImageUrl", group.ImageUrl))
@@ -55,7 +56,7 @@ func Create(c *gin.Context) {
 		return
 	}
 
-	if err := groupService.GenerateUUIDAndCreateByUser(&group, userData); err != nil {
+	if err := r.service.GenerateUUIDAndCreateByUser(&group, userData); err != nil {
 		res := exception.InternalServerError(err.Error())
 		c.JSON(http.StatusInternalServerError, res)
 		return
@@ -67,12 +68,11 @@ func Create(c *gin.Context) {
 
 }
 
-func Update(c *gin.Context) {
+func (r *Resource) Update(c *gin.Context) {
 	userData := c.MustGet("userData").(*entity.User)
 	groupData := c.MustGet("groupData").(*entity.Group)
 	uuid := c.Param("uuid")
-	groupService := NewService()
-	logger.Info("Group update controller",
+	r.logger.Info("Group update controller",
 		log.String("line-id", userData.LineId),
 		log.String("uuid", uuid))
 
@@ -89,13 +89,13 @@ func Update(c *gin.Context) {
 		return
 	}
 
-	if isAdmin := groupService.CheckUserIsAdmin(groupData, userData); !isAdmin {
+	if isAdmin := r.service.CheckUserIsAdmin(groupData, userData); !isAdmin {
 		res := exception.Unauthorized("The user is not admin.")
 		c.JSON(http.StatusUnauthorized, res)
 		return
 	}
 
-	if err := groupService.UpdateGroupById(&request, groupData.Id); err != nil {
+	if err := r.service.UpdateGroupById(&request, groupData.Id); err != nil {
 		res := exception.InternalServerError("")
 		c.JSON(http.StatusInternalServerError, res)
 		return
@@ -111,22 +111,21 @@ func Update(c *gin.Context) {
 	}
 }
 
-func Delete(c *gin.Context) {
+func (r *Resource) Delete(c *gin.Context) {
 	userData := c.MustGet("userData").(*entity.User)
 	groupData := c.MustGet("groupData").(*entity.Group)
 	uuid := c.Param("uuid")
-	groupService := NewService()
-	logger.Info("Group update controller",
+	r.logger.Info("Group update controller",
 		log.String("line-id", userData.LineId),
 		log.String("uuid", uuid))
 
-	if isAdmin := groupService.CheckUserIsAdmin(groupData, userData); !isAdmin {
+	if isAdmin := r.service.CheckUserIsAdmin(groupData, userData); !isAdmin {
 		res := exception.Unauthorized("The user is not admin.")
 		c.JSON(http.StatusUnauthorized, res)
 		return
 	}
 
-	if err := groupService.DeleteGroupById(groupData.Id); err != nil {
+	if err := r.service.DeleteGroupById(groupData.Id); err != nil {
 		res := exception.InternalServerError("")
 		c.JSON(http.StatusInternalServerError, res)
 		return
@@ -137,10 +136,10 @@ func Delete(c *gin.Context) {
 	}
 }
 
-//func UserList(c *gin.Context) {
+//func (r *Resource) UserList(c *gin.Context) {
 //	lineId := c.GetHeader("Line-Id")
 //	uuid := c.Param("group_uuid")
-//	logger.Info("Group controller UserList",
+//	r.logger.Info("Group controller UserList",
 //		log.String("line-id", lineId),
 //		log.String("group_uuid", uuid))
 //

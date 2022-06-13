@@ -3,7 +3,6 @@ package group
 import (
 	"errors"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/entity"
-	"github.com/ZhuoYIZIA/money-liff-api/pkg/database"
 	"github.com/ZhuoYIZIA/money-liff-api/pkg/log"
 	"gorm.io/gorm"
 )
@@ -23,10 +22,10 @@ type repository struct {
 	logger *log.Logger
 }
 
-func NewRepository() Repository {
+func NewRepository(db *gorm.DB, logger *log.Logger) Repository {
 	return &repository{
-		db:     database.Connection(),
-		logger: log.TeeDefault(),
+		db:     db,
+		logger: logger,
 	}
 }
 

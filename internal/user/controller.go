@@ -9,13 +9,16 @@ import (
 	"net/http"
 )
 
-var logger = log.TeeDefault()
+type Resource struct {
+	service Service
+	logger  *log.Logger
+}
 
-func GetUserOrRegister(c *gin.Context) {
+func (r *Resource) GetUserOrRegister(c *gin.Context) {
 	user := entity.User{}
 	if err := c.Bind(&user); err != nil {
 		errMsg := err.Error()
-		logger.Error("user register API bind error: ", log.String("err", errMsg))
+		r.logger.Error("user register API bind error: ", log.String("err", errMsg))
 		res := exception.BadRequest(errMsg)
 		c.JSON(http.StatusBadRequest, res)
 		return
@@ -23,19 +26,18 @@ func GetUserOrRegister(c *gin.Context) {
 
 	if err := user.Validate(); err != nil {
 		errMsg := err.Error()
-		logger.Error("user register API request validate error: ", log.String("err", errMsg))
+		r.logger.Error("user register API request validate error: ", log.String("err", errMsg))
 		res := exception.BadRequest(errMsg)
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
-	logger.Info("user register API request data",
+	r.logger.Info("user register API request data",
 		log.String("line id", user.LineId),
 		log.String("name", user.Name),
 		log.String("avatar url", user.AvatarUrl))
 
-	service := NewService()
-	if err := service.CreateIfNotFound(&user); err != nil {
+	if err := r.service.CreateIfNotFound(&user); err != nil {
 		res := exception.InternalServerError("")
 		c.JSON(http.StatusInternalServerError, res)
 		return

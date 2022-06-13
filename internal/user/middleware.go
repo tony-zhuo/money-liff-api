@@ -6,10 +6,9 @@ import (
 	"net/http"
 )
 
-func AuthCheckMiddleware() func(c *gin.Context) {
+func AuthCheckMiddleware(service Service) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		lineId := c.GetHeader("Line-Id")
-		userService := NewService()
 
 		if lineId == "" {
 			res := exception.Unauthorized("")
@@ -18,7 +17,7 @@ func AuthCheckMiddleware() func(c *gin.Context) {
 			return
 		}
 
-		userData := userService.GetUserByLineId(lineId)
+		userData := service.GetUserByLineId(lineId)
 		if userData == nil {
 			res := exception.Unauthorized("")
 			c.JSON(http.StatusUnauthorized, res)
