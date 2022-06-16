@@ -29,7 +29,7 @@ services:
 ### postgres ####################
   postgres:
     image: postgres:14.2-alpine
-    container_name: money-liff-posgres
+    container_name: money-liff-postgres
     ports:
       - "15432:5432"
     environment:
