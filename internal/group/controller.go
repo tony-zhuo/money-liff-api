@@ -71,10 +71,10 @@ func (r *Resource) Create(c *gin.Context) {
 func (r *Resource) Update(c *gin.Context) {
 	userData := c.MustGet("userData").(*entity.User)
 	groupData := c.MustGet("groupData").(*entity.Group)
-	uuid := c.Param("uuid")
+	groupUuid := c.Param("group_uuid")
 	r.logger.Info("Group update controller",
 		log.String("line-id", userData.LineId),
-		log.String("uuid", uuid))
+		log.String("group_uuid", groupUuid))
 
 	request := entity.Group{}
 	if err := c.Bind(&request); err != nil {
@@ -101,7 +101,7 @@ func (r *Resource) Update(c *gin.Context) {
 		return
 	} else {
 		res := response.Ok("Update success.", entity.Group{
-			UUID:      uuid,
+			UUID:      groupUuid,
 			Name:      request.Name,
 			UserLimit: request.UserLimit,
 			ImageUrl:  request.ImageUrl,
@@ -114,10 +114,10 @@ func (r *Resource) Update(c *gin.Context) {
 func (r *Resource) Delete(c *gin.Context) {
 	userData := c.MustGet("userData").(*entity.User)
 	groupData := c.MustGet("groupData").(*entity.Group)
-	uuid := c.Param("uuid")
+	groupUuid := c.Param("group_uuid")
 	r.logger.Info("Group update controller",
 		log.String("line-id", userData.LineId),
-		log.String("uuid", uuid))
+		log.String("group_uuid", groupUuid))
 
 	if isAdmin := r.service.CheckUserIsAdmin(groupData, userData); !isAdmin {
 		res := exception.Unauthorized("The user is not admin.")
