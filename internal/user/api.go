@@ -5,8 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Routes(route *gin.RouterGroup, service Service, logger *log.Logger) {
-	resource := Resource{service: service, logger: logger}
+func Routes(route *gin.RouterGroup, userService Service, logger *log.Logger) {
+	resource := Resource{service: userService, logger: logger}
 
 	route.POST("/user/register", resource.GetUserOrRegister)
 }
