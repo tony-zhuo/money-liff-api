@@ -163,3 +163,18 @@ func (r *Resource) Delete(c *gin.Context) {
 //		return
 //	}
 //}
+
+func (r *Resource) Join(c *gin.Context) {
+	userData := c.MustGet("userData").(*entity.User)
+	groupData := c.MustGet("groupData").(*entity.Group)
+
+	if err := r.service.UserJoinGroup(userData, groupData); err != nil {
+		res := exception.InternalServerError(err.Error())
+		c.JSON(http.StatusInternalServerError, res)
+		return
+	} else {
+		res := response.Created("")
+		c.JSON(http.StatusOK, res)
+		return
+	}
+}

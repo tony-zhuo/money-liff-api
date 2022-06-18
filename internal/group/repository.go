@@ -15,6 +15,7 @@ type Repository interface {
 	UpdateGroupById(group *entity.Group, id int) error
 	DeleteGroupById(id int) error
 	GetUserListInGroup(group *entity.Group) (*[]entity.User, error)
+	AddUserInGroup(group *entity.Group, user *entity.User) error
 }
 
 type repository struct {
@@ -98,4 +99,12 @@ func (r *repository) GetUserListInGroup(group *entity.Group) (*[]entity.User, er
 		return nil, err
 	}
 	return users, nil
+}
+
+func (r *repository) AddUserInGroup(group *entity.Group, user *entity.User) error {
+	err := r.db.Model(user).Association("Groups").Append([]*entity.Group{group})
+	if err != nil {
+		return err
+	}
+	return nil
 }

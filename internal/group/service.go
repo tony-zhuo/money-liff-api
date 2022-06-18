@@ -16,6 +16,7 @@ type Service interface {
 	UpdateGroupById(group *entity.Group, id int) error
 	DeleteGroupById(id int) error
 	GetUserListInGroup(group *entity.Group) (*[]entity.User, error)
+	UserJoinGroup(user *entity.User, group *entity.Group) error
 }
 
 type service struct {
@@ -89,3 +90,10 @@ func (s *service) GetUserListInGroup(group *entity.Group) (*[]entity.User, error
 //func (s *service) CheckUserIsInGroup(group *entity.Group, user *entity.User) bool {
 //
 //}
+
+func (s *service) UserJoinGroup(user *entity.User, group *entity.Group) error {
+	if err := s.repo.AddUserInGroup(group, user); err != nil {
+		return err
+	}
+	return nil
+}
