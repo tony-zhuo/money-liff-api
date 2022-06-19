@@ -14,7 +14,8 @@ type Repository interface {
 	GetAllDataCountByUser(user *entity.User) int
 	UpdateGroupById(group *entity.Group, id int) error
 	DeleteGroupById(id int) error
-	GetUserListInGroup(group *entity.Group) (*[]entity.User, error)
+	UserListInGroup(group *entity.Group, page, perPage int, sort string) (*[]entity.User, error)
+	GetUserCountInGroup(group *entity.Group) int
 	AddUserInGroup(group *entity.Group, user *entity.User) error
 }
 
@@ -88,17 +89,29 @@ func (r *repository) DeleteGroupById(id int) error {
 	return nil
 }
 
-func (r *repository) GetUserListInGroup(group *entity.Group) (*[]entity.User, error) {
+func (r *repository) UserListInGroup(group *entity.Group, page, perPage int, sort string) (*[]entity.User, error) {
 	var users *[]entity.User
 	err := r.db.
 		Model(group).
-		Association("users").
-		Find(users)
+		Order(sort).
+		Offset((page - 1) * perPage).
+		Limit(perPage).
+		Association("Users").
+		Find(&users)
 
 	if err != nil {
 		return nil, err
 	}
 	return users, nil
+}
+
+func (r *repository) GetUserCountInGroup(group *entity.Group) int {
+	count := r.db.
+		Model(group).
+		Association("Users").
+		Count()
+
+	return int(count)
 }
 
 func (r *repository) AddUserInGroup(group *entity.Group, user *entity.User) error {

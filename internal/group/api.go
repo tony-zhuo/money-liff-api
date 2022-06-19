@@ -29,7 +29,11 @@ func Routes(route *gin.RouterGroup, groupService Service, userService user.Servi
 		ParamsCheckMiddleware(groupService),
 		resource.Delete)
 
-	//route.GET("/group/:group_uuid/user", UserList)
+	route.GET("/group/:group_uuid/user",
+		user.AuthCheckMiddleware(userService),
+		ParamsCheckMiddleware(groupService),
+		resource.UserList)
+
 	route.POST("/group/:group_uuid/user",
 		user.AuthCheckMiddleware(userService),
 		ParamsCheckMiddleware(groupService),

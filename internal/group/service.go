@@ -15,7 +15,7 @@ type Service interface {
 	CheckUserIsAdmin(group *entity.Group, user *entity.User) bool
 	UpdateGroupById(group *entity.Group, id int) error
 	DeleteGroupById(id int) error
-	GetUserListInGroup(group *entity.Group) (*[]entity.User, error)
+	GetUserListWithPagination(group *entity.Group, offset, limit int, sort string) (*response.Pagination, error)
 	UserJoinGroup(user *entity.User, group *entity.Group) error
 }
 
@@ -82,14 +82,23 @@ func (s *service) DeleteGroupById(id int) error {
 	return nil
 }
 
-func (s *service) GetUserListInGroup(group *entity.Group) (*[]entity.User, error) {
-	users, err := s.repo.GetUserListInGroup(group)
-	return users, err
-}
+func (s *service) GetUserListWithPagination(group *entity.Group, page, perPage int, sort string) (*response.Pagination, error) {
+	users, err := s.repo.UserListInGroup(group, page, perPage, sort)
+	if err != nil {
+		return nil, err
+	}
 
-//func (s *service) CheckUserIsInGroup(group *entity.Group, user *entity.User) bool {
-//
-//}
+	count := s.repo.GetUserCountInGroup(group)
+
+	pagination := &response.Pagination{
+		Page:       page,
+		PerPage:    perPage,
+		TotalCount: count,
+		TotalPage:  int(math.Ceil(float64(count) / float64(perPage))),
+		Result:     users,
+	}
+	return pagination, err
+}
 
 func (s *service) UserJoinGroup(user *entity.User, group *entity.Group) error {
 	if err := s.repo.AddUserInGroup(group, user); err != nil {
