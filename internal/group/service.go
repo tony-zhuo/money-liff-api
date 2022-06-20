@@ -17,6 +17,7 @@ type Service interface {
 	DeleteGroupById(id int) error
 	GetUserListWithPagination(group *entity.Group, offset, limit int, sort string) (*response.Pagination, error)
 	UserJoinGroup(user *entity.User, group *entity.Group) error
+	DeleteUserInGroup(group *entity.Group, user *entity.User) error
 }
 
 type service struct {
@@ -102,6 +103,13 @@ func (s *service) GetUserListWithPagination(group *entity.Group, page, perPage i
 
 func (s *service) UserJoinGroup(user *entity.User, group *entity.Group) error {
 	if err := s.repo.AddUserInGroup(group, user); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *service) DeleteUserInGroup(group *entity.Group, user *entity.User) error {
+	if err := s.repo.DeleteUserInGroup(group, user); err != nil {
 		return err
 	}
 	return nil

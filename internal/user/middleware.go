@@ -29,3 +29,20 @@ func AuthCheckMiddleware(userService Service) func(c *gin.Context) {
 		c.Next()
 	}
 }
+
+func ParamsCheckMiddleware(userService Service) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		lineId := c.Param("user_uuid")
+
+		userData := userService.GetUserByLineId(lineId)
+		if userData == nil {
+			res := exception.Unauthorized("")
+			c.JSON(http.StatusUnauthorized, res)
+			c.Abort()
+			return
+		}
+
+		c.Set("userData", userData)
+		c.Next()
+	}
+}

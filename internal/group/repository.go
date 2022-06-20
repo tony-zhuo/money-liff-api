@@ -17,6 +17,7 @@ type Repository interface {
 	UserListInGroup(group *entity.Group, page, perPage int, sort string) (*[]entity.User, error)
 	GetUserCountInGroup(group *entity.Group) int
 	AddUserInGroup(group *entity.Group, user *entity.User) error
+	DeleteUserInGroup(group *entity.Group, user *entity.User) error
 }
 
 type repository struct {
@@ -120,4 +121,8 @@ func (r *repository) AddUserInGroup(group *entity.Group, user *entity.User) erro
 		return err
 	}
 	return nil
+}
+
+func (r *repository) DeleteUserInGroup(group *entity.Group, user *entity.User) error {
+	return r.db.Model(group).Association("Users").Delete(user)
 }

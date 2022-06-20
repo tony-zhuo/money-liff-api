@@ -172,5 +172,16 @@ func (r *Resource) Join(c *gin.Context) {
 }
 
 func (r *Resource) DeleteUserInGroup(c *gin.Context) {
-	//groupData := c.MustGet("groupData").(*entity.Group)
+	groupData := c.MustGet("groupData").(*entity.Group)
+	userData := c.MustGet("userData").(*entity.User)
+
+	if err := r.service.DeleteUserInGroup(groupData, userData); err != nil {
+		res := exception.InternalServerError(err.Error())
+		c.JSON(http.StatusInternalServerError, res)
+		return
+	} else {
+		res := response.Ok("", nil)
+		c.JSON(http.StatusOK, res)
+		return
+	}
 }

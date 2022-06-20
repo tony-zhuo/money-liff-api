@@ -38,4 +38,10 @@ func Routes(route *gin.RouterGroup, groupService Service, userService user.Servi
 		user.AuthCheckMiddleware(userService),
 		ParamsCheckMiddleware(groupService),
 		resource.Join)
+
+	route.DELETE("/group/:group_uuid/user/:user_uuid",
+		user.AuthCheckMiddleware(userService),
+		user.ParamsCheckMiddleware(userService),
+		ParamsCheckMiddleware(groupService),
+		resource.DeleteUserInGroup)
 }
