@@ -25,7 +25,7 @@ func AuthCheckMiddleware(userService Service) func(c *gin.Context) {
 			return
 		}
 
-		c.Set("userData", userData)
+		c.Set("auth", userData)
 		c.Next()
 	}
 }
