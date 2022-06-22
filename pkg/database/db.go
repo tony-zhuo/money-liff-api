@@ -23,12 +23,16 @@ func Connection() *gorm.DB {
 }
 
 func getDsn() string {
-	return fmt.Sprintf(
-		"host=%s port=%s user=%s dbname=%s password=%s sslmode=disable TimeZone=Asia/Taipei",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_USERNAME"),
-		os.Getenv("DB_DATABASE"),
-		os.Getenv("DB_PASSWORD"),
-	)
+	if os.Getenv("APP_ENV") == "production" {
+		return os.Getenv("DATABASE_URL")
+	} else {
+		return fmt.Sprintf(
+			"host=%s port=%s user=%s dbname=%s password=%s sslmode=disable TimeZone=Asia/Taipei",
+			os.Getenv("DB_HOST"),
+			os.Getenv("DB_PORT"),
+			os.Getenv("DB_USERNAME"),
+			os.Getenv("DB_DATABASE"),
+			os.Getenv("DB_PASSWORD"),
+		)
+	}
 }
