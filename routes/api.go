@@ -13,7 +13,8 @@ func InitRoutes() *gin.Engine {
 	router := gin.Default()
 
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:8080"}
+	//config.AllowOrigins = []string{"http://localhost:8080"}
+	config.AllowOrigins = []string{"*"}
 	config.AddAllowHeaders("Line-Id")
 
 	router.Use(cors.New(config))
