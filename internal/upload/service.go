@@ -9,6 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"mime/multipart"
 	"os"
+	"strconv"
+	"time"
 )
 
 type Service interface {
@@ -30,8 +32,14 @@ func (s *service) UploadImageAndGetPath(file *multipart.FileHeader, folder strin
 	bucket := os.Getenv("AWS_S3_BUCKET")
 	s3Key := os.Getenv("AWS_S3_KEY")
 	s3Secret := os.Getenv("AWS_S3_SECRET")
+	s3Endpoint := os.Getenv("AWS_S3_ENDPOINT")
 	credential := credentials.NewStaticCredentials(s3Key, s3Secret, "")
-	fileEndpoint := folder + "/" + file.Filename
+	currentUnixTime := strconv.Itoa(int(time.Now().Unix()))
+
+	s.logger.Info("UploadImageAndGetPath currentTimeString", log.String("time", currentUnixTime))
+	fileEndpoint := folder + "/" + currentUnixTime + "-" + file.Filename
+	s.logger.Info("UploadImageAndGetPath fileEndpoint", log.String("endpoint", fileEndpoint))
+
 	size := file.Size
 
 	sess, err := session.NewSession(&aws.Config{
@@ -66,6 +74,6 @@ func (s *service) UploadImageAndGetPath(file *multipart.FileHeader, folder strin
 		return nil, err
 	}
 
-	fileUrl := os.Getenv("AWS_S3_ENDPOINT") + "/" + fileEndpoint
+	fileUrl := s3Endpoint + "/" + fileEndpoint
 	return &fileUrl, nil
 }
