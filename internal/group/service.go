@@ -39,12 +39,22 @@ func (s *service) GetListByUserWithPagination(user *entity.User, page, perPage i
 	}
 	count := s.repo.GetAllDataCountByUser(user)
 
+	groupResponse := make([]entity.GroupResponse, len(*groups)-1)
+	for _, group := range *groups {
+		groupResponse = append(groupResponse, entity.GroupResponse{
+			UUID:     group.UUID,
+			Name:     group.Name,
+			ImageUrl: group.ImageUrl,
+			IsAdmin:  group.AdminUserId == user.Id,
+		})
+	}
+
 	pagination := &response.Pagination{
 		Page:       page,
 		PerPage:    perPage,
 		TotalCount: count,
 		TotalPage:  int(math.Ceil(float64(count) / float64(perPage))),
-		Result:     groups,
+		Result:     groupResponse,
 	}
 	return pagination, nil
 }

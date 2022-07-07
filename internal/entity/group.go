@@ -19,6 +19,13 @@ type Group struct {
 	Users       []*User        `json:"-" gorm:"many2many:user_groups;"`
 }
 
+type GroupResponse struct {
+	UUID     string `json:"uuid"`
+	Name     string `json:"name"`
+	ImageUrl string `json:"image_url"`
+	IsAdmin  bool   `json:"is_admin"`
+}
+
 func (g *Group) GetUuid() string {
 	return g.UUID
 }
