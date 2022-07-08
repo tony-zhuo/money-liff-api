@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/ZhuoYIZIA/money-liff-api/internal/cost"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/group"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/upload"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/user"
@@ -25,12 +26,14 @@ func InitRoutes() *gin.Engine {
 	userService := user.NewService(user.NewRepository(db, logger), logger)
 	groupService := group.NewService(group.NewRepository(db, logger), logger)
 	uploadService := upload.NewService(logger)
+	costService := cost.NewService(cost.NewRepository(db, logger), logger)
 
 	v1Router := router.Group("v1")
 	{
 		user.Routes(v1Router, userService, logger)
 		group.Routes(v1Router, groupService, userService, logger)
 		upload.Routes(v1Router, uploadService, logger)
+		cost.Routes(v1Router, costService, logger)
 	}
 
 	return router
