@@ -33,7 +33,7 @@ func InitRoutes() *gin.Engine {
 		user.Routes(v1Router, userService, logger)
 		group.Routes(v1Router, groupService, userService, logger)
 		upload.Routes(v1Router, uploadService, logger)
-		cost.Routes(v1Router, costService, logger)
+		cost.Routes(v1Router, costService, groupService, userService, logger)
 	}
 
 	return router
