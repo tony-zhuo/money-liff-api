@@ -7,6 +7,7 @@ import (
 )
 
 type Repository interface {
+	CreateCostItemByUser(item *entity.GroupCostItem) error
 }
 
 type repository struct {
@@ -21,6 +22,10 @@ func NewRepository(db *gorm.DB, logger *log.Logger) Repository {
 	}
 }
 
-func (r *repository) CreateCostItemByUser(item *entity.GroupCostItem, group entity.Group, payer entity.User) {
-
+func (r *repository) CreateCostItemByUser(item *entity.GroupCostItem) error {
+	result := r.db.Create(&item)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
