@@ -9,7 +9,7 @@ import (
 type Group struct {
 	Id          int            `json:"-" validate:"-" gorm:"primaryKey"`
 	UUID        string         `json:"uuid" validate:"-"`
-	Name        string         `json:"name" validate:"required,ascii" binding:"required"`
+	Name        string         `json:"name" validate:"required" binding:"required"`
 	UserLimit   int            `json:"user_limit" validate:"required,numeric" binding:"required"`
 	ImageUrl    string         `json:"image_url" validate:"-"`
 	AdminUserId int            `json:"-" validate:"-" gorm:"column:admin_user_id"`

@@ -11,7 +11,7 @@ var validate *validator.Validate
 type User struct {
 	Id        int            `json:"-" validate:"-" gorm:"primaryKey"`
 	LineId    string         `json:"line_id" validate:"required,alphanum" binding:"required"`
-	Name      string         `json:"name" validate:"required,alphanumunicode" binding:"required"`
+	Name      string         `json:"name" validate:"required" binding:"required"`
 	AvatarUrl string         `json:"avatar_url" validate:"-"`
 	CreatedAt time.Time      `json:"-" validate:"-"`
 	UpdatedAt time.Time      `json:"-" validate:"-"`
