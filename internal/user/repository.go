@@ -36,7 +36,7 @@ func (r *repository) Get(lineId string) *entity.User {
 }
 
 func (r *repository) Create(user *entity.User) error {
-	if result := r.db.Create(user); result.Error != nil {
+	if result := r.db.Debug().Create(user); result.Error != nil {
 		r.logger.Error("user repo create err: ", log.Any("err", result.Error))
 		return result.Error
 	}
