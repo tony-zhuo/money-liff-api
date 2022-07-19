@@ -9,6 +9,7 @@ import (
 )
 
 type Service interface {
+	GetGroupWithCostItemInfo(user *entity.User, group *entity.Group) (*entity.GroupWithCostItemResponse, error)
 	GetListByUserWithPagination(user *entity.User, offset, limit int, sort string) (*response.Pagination, error)
 	GenerateUUIDAndCreateByUser(group *entity.Group, user *entity.User) error
 	GetGroupByUUID(uuid string) *entity.Group
@@ -30,6 +31,36 @@ func NewService(repo Repository, logger *log.Logger) Service {
 		repo:   repo,
 		logger: logger,
 	}
+}
+
+func (s *service) GetGroupWithCostItemInfo(user *entity.User, group *entity.Group) (*entity.GroupWithCostItemResponse, error) {
+	groupWithCostItem, err := s.repo.GetWithCostItem(group.UUID)
+	if err != nil {
+		return nil, err
+	}
+
+	var costItems = make([]entity.GroupCostItemResponse, 0)
+	for _, item := range groupWithCostItem.CostItem {
+		payAt := item.PayAt.String()
+		avatarUrl := item.Payer.AvatarUrl
+		costItems = append(costItems, entity.GroupCostItemResponse{
+			Name:        item.Name,
+			TotalAmount: item.TotalAmount,
+			PayAt:       &payAt,
+			Payer: entity.PayerResponse{
+				Name:      item.Payer.Name,
+				AvatarUrl: &avatarUrl,
+			},
+		})
+	}
+
+	return &entity.GroupWithCostItemResponse{
+		UUID:      groupWithCostItem.UUID,
+		Name:      groupWithCostItem.Name,
+		UserLimit: groupWithCostItem.UserLimit,
+		ImageUrl:  groupWithCostItem.ImageUrl,
+		CostItem:  costItems,
+	}, nil
 }
 
 func (s *service) GetListByUserWithPagination(user *entity.User, page, perPage int, sort string) (*response.Pagination, error) {

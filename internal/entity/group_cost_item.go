@@ -20,6 +20,7 @@ type GroupCostItem struct {
 	CreatedAt    time.Time                  `json:"-" validate:"-"`
 	UpdatedAt    time.Time                  `json:"-" validate:"-"`
 	DeletedAt    gorm.DeletedAt             `json:"-" validate:"-"`
+	Payer        User
 }
 
 type GroupCostItemRequestArg struct {
@@ -37,4 +38,11 @@ func (g *GroupCostItemRequestArg) Validate() error {
 		return err
 	}
 	return nil
+}
+
+type GroupCostItemResponse struct {
+	Name        string        `json:"name"`
+	TotalAmount int           `json:"total_amount"`
+	PayAt       *string       `json:"pay_at"`
+	Payer       PayerResponse `json:"payer"`
 }

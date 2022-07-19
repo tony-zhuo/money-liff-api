@@ -17,6 +17,15 @@ type Group struct {
 	UpdatedAt   time.Time      `json:"-" validate:"-"`
 	DeletedAt   gorm.DeletedAt `json:"-" validate:"-"`
 	Users       []*User        `json:"-" gorm:"many2many:user_groups;"`
+	CostItem    []GroupCostItem
+}
+
+type GroupWithCostItemResponse struct {
+	UUID      string                  `json:"uuid"`
+	Name      string                  `json:"name"`
+	UserLimit int                     `json:"user_limit"`
+	ImageUrl  string                  `json:"image_url"`
+	CostItem  []GroupCostItemResponse `json:"cost_item"`
 }
 
 type GroupResponse struct {

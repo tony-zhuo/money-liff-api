@@ -30,3 +30,8 @@ func (u *User) Validate() error {
 	}
 	return nil
 }
+
+type PayerResponse struct {
+	Name      string  `json:"name"`
+	AvatarUrl *string `json:"avatar_url"`
+}

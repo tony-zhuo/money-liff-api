@@ -9,6 +9,7 @@ import (
 
 type Repository interface {
 	ListByUser(user *entity.User, offset, limit int, sort string) (*[]entity.Group, error)
+	GetWithCostItem(uuid string) (*entity.Group, error)
 	CreateByUser(group *entity.Group, user *entity.User) error
 	GetByUUID(uuid string) *entity.Group
 	GetAllDataCountByUser(user *entity.User) int
@@ -48,6 +49,16 @@ func (r *repository) ListByUser(user *entity.User, page, perPage int, sort strin
 	}
 
 	return groups, nil
+}
+
+func (r *repository) GetWithCostItem(uuid string) (*entity.Group, error) {
+	var group entity.Group
+	err := r.db.Model(&entity.Group{}).
+		Preload("CostItem.Payer").
+		Where("uuid = ?", uuid).
+		First(&group).Error
+
+	return &group, err
 }
 
 func (r *repository) GetAllDataCountByUser(user *entity.User) int {

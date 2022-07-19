@@ -13,7 +13,10 @@ func Routes(route *gin.RouterGroup, groupService Service, userService user.Servi
 		user.AuthCheckMiddleware(userService),
 		resource.Index)
 
-	//route.GET("/group/:uuid")
+	route.GET("/group/:group_uuid",
+		user.AuthCheckMiddleware(userService),
+		ParamsCheckMiddleware(groupService),
+		resource.Show)
 
 	route.POST("/group",
 		user.AuthCheckMiddleware(userService),

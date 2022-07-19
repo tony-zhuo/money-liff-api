@@ -35,6 +35,23 @@ func (r *Resource) Index(c *gin.Context) {
 	}
 }
 
+func (r *Resource) Show(c *gin.Context) {
+	groupData := c.MustGet("groupData").(*entity.Group)
+	auth := c.MustGet("auth").(*entity.User)
+
+	result, err := r.service.GetGroupWithCostItemInfo(auth, groupData)
+	if err != nil {
+		res := exception.InternalServerError("")
+		c.JSON(http.StatusInternalServerError, res)
+		return
+	}
+	r.logger.Info("Show 4")
+
+	res := response.Ok("", result)
+	c.JSON(http.StatusOK, res)
+	return
+}
+
 func (r *Resource) Create(c *gin.Context) {
 	auth := c.MustGet("auth").(*entity.User)
 
