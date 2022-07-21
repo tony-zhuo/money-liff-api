@@ -7,7 +7,7 @@ import (
 
 type Service interface {
 	CreateIfNotFound(user *entity.User) error
-	GetUserByLineId(lineId string) *entity.User
+	GetUserByLineId(lineId string) (*entity.User, error)
 }
 
 type service struct {
@@ -23,12 +23,9 @@ func NewService(repo Repository, logger *log.Logger) Service {
 }
 
 func (s *service) CreateIfNotFound(user *entity.User) error {
-	if err := s.repo.FirstOrCreate(user); err != nil {
-		return err
-	}
-	return nil
+	return s.repo.FirstOrCreate(user)
 }
 
-func (s *service) GetUserByLineId(lineId string) *entity.User {
-	return s.repo.Get(lineId)
+func (s *service) GetUserByLineId(lineId string) (*entity.User, error) {
+	return s.repo.Get("line_id = ?", lineId)
 }

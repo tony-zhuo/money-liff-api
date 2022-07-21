@@ -8,7 +8,7 @@ import (
 )
 
 type Repository interface {
-	Get(lineId string) *entity.User
+	Get(where string, args ...interface{}) (*entity.User, error)
 	Create(user *entity.User) error
 	FirstOrCreate(user *entity.User) error
 	Update(user *entity.User) error
@@ -26,35 +26,38 @@ func NewRepository(db *gorm.DB, logger *log.Logger) Repository {
 	}
 }
 
-func (r *repository) Get(lineId string) *entity.User {
+func (r *repository) Get(where string, args ...interface{}) (*entity.User, error) {
 	user := entity.User{}
-	result := r.db.Where("line_id = ?", lineId).First(&user)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return nil
+	err := r.db.Where(where, args...).First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	} else if err != nil {
+		r.logger.Error("user repo get err: ", log.Any("err", err))
+		return nil, err
 	}
-	return &user
+	return &user, nil
 }
 
 func (r *repository) Create(user *entity.User) error {
-	if result := r.db.Create(user); result.Error != nil {
-		r.logger.Error("user repo create err: ", log.Any("err", result.Error))
-		return result.Error
+	if err := r.db.Create(user).Error; err != nil {
+		r.logger.Error("user repo create err: ", log.Any("err", err))
+		return err
 	}
 	return nil
 }
 
 func (r *repository) FirstOrCreate(user *entity.User) error {
-	if result := r.db.Where(entity.User{LineId: user.LineId}).FirstOrCreate(user); result.Error != nil {
-		r.logger.Error("user repo FirstOrCreate err: ", log.Any("err", result.Error))
-		return result.Error
+	if err := r.db.Where(entity.User{LineId: user.LineId}).FirstOrCreate(user).Error; err != nil {
+		r.logger.Error("user repo FirstOrCreate err: ", log.Any("err", err))
+		return err
 	}
 	return nil
 }
 
 func (r *repository) Update(user *entity.User) error {
-	if result := r.db.Model(user).Where("line_id = ?", user.LineId).Updates(user); result.Error != nil {
-		r.logger.Error("user repo update err: ", log.Any("err", result.Error))
-		return result.Error
+	if err := r.db.Model(user).Where("line_id = ?", user.LineId).Updates(user).Error; err != nil {
+		r.logger.Error("user repo update err: ", log.Any("err", err))
+		return err
 	}
 	return nil
 }
