@@ -19,6 +19,7 @@ type UserServiceTestSuite struct {
 }
 
 var (
+	nilUser       *entity.User
 	okLineId      = "U060d21d2aedb6afeee372d9aba70b1"
 	okName        = "TestName"
 	okAvatarUrl   = "https://first-or-create-ok-avatar-url"
@@ -74,6 +75,8 @@ var (
 		UpdatedAt: updatedAt,
 		DeletedAt: nullDeletedAt,
 	}
+
+	repoGetNotFoundArg = "notfounduser"
 )
 
 func (s *UserServiceTestSuite) SetupTest() {
@@ -103,6 +106,11 @@ func (s *UserServiceTestSuite) SetupTest() {
 		[]interface{}{repoGetOkArg},
 	).Return(&repoGetOkReturn, nil)
 
+	repo.On("Get",
+		"line_id = ?",
+		[]interface{}{repoGetNotFoundArg},
+	).Return(nilUser, nil)
+
 	s.service = NewService(repo, log.TeeDefault())
 }
 
@@ -110,27 +118,30 @@ func (s *UserServiceTestSuite) TestRegisterOrFindOk() {
 	user, err := s.service.RegisterOrFind(&repoFirstOrCreateOkArgs)
 	assert.Equal(s.T(), nil, err)
 	assert.Equal(s.T(), repoFirstOrCreateOkReturn, *user)
-
 }
 
 func (s *UserServiceTestSuite) TestRegisterOrFindLineIdFailed() {
-	var nullUser *entity.User
 	user, err := s.service.RegisterOrFind(&repoFirstOrCreateLineIdRequiredFailedArgs)
 	assert.Equal(s.T(), repoFirstOrCreateLineIdRequiredError, err)
-	assert.Equal(s.T(), nullUser, user)
+	assert.Equal(s.T(), nilUser, user)
 }
 
 func (s *UserServiceTestSuite) TestRegisterOrFindNameFailed() {
-	var nullUser *entity.User
 	user, err := s.service.RegisterOrFind(&repoFirstOrCreateNameRequiredFailedArgs)
 	assert.Equal(s.T(), repoFirstOrCreateNameRequiredError, err)
-	assert.Equal(s.T(), nullUser, user)
+	assert.Equal(s.T(), nilUser, user)
 }
 
 func (s *UserServiceTestSuite) TestGetOk() {
 	user, err := s.service.GetUserByLineId(repoGetOkArg)
 	assert.Equal(s.T(), nil, err)
 	assert.Equal(s.T(), repoGetOkReturn, *user)
+}
+
+func (s *UserServiceTestSuite) TestGetNotFound() {
+	user, err := s.service.GetUserByLineId(repoGetNotFoundArg)
+	assert.Equal(s.T(), nil, err)
+	assert.Equal(s.T(), nilUser, user)
 }
 
 func TestUserServiceTestSuite(t *testing.T) {
