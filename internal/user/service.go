@@ -23,6 +23,9 @@ func NewService(repo Repository, logger *log.Logger) Service {
 }
 
 func (s *service) RegisterOrFind(user *entity.User) (*entity.User, error) {
+	if err := user.Validate(); err != nil {
+		return nil, err
+	}
 	return s.repo.FirstOrCreate(user, "line_id = ?", user.LineId)
 }
 
