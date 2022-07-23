@@ -26,7 +26,7 @@ var (
 	nullDeletedAt sql.NullTime = sql.NullTime{}
 
 	lineIdValidateError = validate_err_msg.ErrorMessage{Param: "LineId", Message: "This field is required"}
-	//nameValidateError   = validate_err_msg.ErrorMessage{Param: "Name", Message: "This field is required"}
+	nameValidateError   = validate_err_msg.ErrorMessage{Param: "Name", Message: "This field is required"}
 )
 
 var (
@@ -50,9 +50,17 @@ var (
 		Name:      firstOrCreateOkName,
 		AvatarUrl: firstOrCreateOkAvatarUrl,
 	}
-
 	repoFirstOrCreateLineIdRequiredError = validate_err_msg.ValidateErrorMessages{
 		lineIdValidateError,
+	}
+
+	repoFirstOrCreateNameRequiredFailedArgs = entity.User{
+		LineId:    firstOrCreateOkLineId,
+		Name:      "",
+		AvatarUrl: firstOrCreateOkAvatarUrl,
+	}
+	repoFirstOrCreateNameRequiredError = validate_err_msg.ValidateErrorMessages{
+		nameValidateError,
 	}
 )
 
@@ -72,6 +80,12 @@ func (s *UserServiceTestSuite) SetupTest() {
 		[]interface{}{repoFirstOrCreateOkArgs.LineId},
 	).Return(nil, repoFirstOrCreateLineIdRequiredError)
 
+	repo.On("FirstOrCreate",
+		&repoFirstOrCreateNameRequiredFailedArgs,
+		"line-id = ?",
+		[]interface{}{repoFirstOrCreateOkArgs.LineId},
+	).Return(nil, repoFirstOrCreateNameRequiredError)
+
 	s.service = NewService(repo, log.TeeDefault())
 }
 
@@ -86,6 +100,13 @@ func (s *UserServiceTestSuite) TestRegisterOrFindLineIdFailed() {
 	var nullUser *entity.User
 	user, err := s.service.RegisterOrFind(&repoFirstOrCreateLineIdRequiredFailedArgs)
 	assert.Equal(s.T(), repoFirstOrCreateLineIdRequiredError, err)
+	assert.Equal(s.T(), nullUser, user)
+}
+
+func (s *UserServiceTestSuite) TestRegisterOrFindNameFailed() {
+	var nullUser *entity.User
+	user, err := s.service.RegisterOrFind(&repoFirstOrCreateNameRequiredFailedArgs)
+	assert.Equal(s.T(), repoFirstOrCreateNameRequiredError, err)
 	assert.Equal(s.T(), nullUser, user)
 }
 
