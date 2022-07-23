@@ -23,7 +23,7 @@ func NewService(repo Repository, logger *log.Logger) Service {
 }
 
 func (s *service) RegisterOrFind(user *entity.User) (*entity.User, error) {
-	return s.repo.FirstOrCreate(user, "line-id = ?", user.LineId)
+	return s.repo.FirstOrCreate(user, "line_id = ?", user.LineId)
 }
 
 func (s *service) GetUserByLineId(lineId string) (*entity.User, error) {
