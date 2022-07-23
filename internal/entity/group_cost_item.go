@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"github.com/ZhuoYIZIA/money-liff-api/internal/unity/validate_err_msg"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 	"time"
@@ -35,7 +36,7 @@ type GroupCostItemRequestArg struct {
 func (g *GroupCostItemRequestArg) Validate() error {
 	validate := validator.New()
 	if err := validate.Struct(g); err != nil {
-		return err
+		return validate_err_msg.Transfer(err)
 	}
 	return nil
 }
