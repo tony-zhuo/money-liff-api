@@ -19,11 +19,12 @@ type UserServiceTestSuite struct {
 }
 
 var (
-	firstOrCreateOkLineId    string = "U060d21d2aedb6afeee372d9aba70b1"
-	firstOrCreateOkName      string = "TestName"
-	firstOrCreateOkAvatarUrl string = "https://first-or-create-ok-avatar-url"
-
-	nullDeletedAt sql.NullTime = sql.NullTime{}
+	okLineId      = "U060d21d2aedb6afeee372d9aba70b1"
+	okName        = "TestName"
+	okAvatarUrl   = "https://first-or-create-ok-avatar-url"
+	createdAt     = time.Now()
+	updatedAt     = time.Now()
+	nullDeletedAt = gorm.DeletedAt(sql.NullTime{})
 
 	lineIdValidateError = validate_err_msg.ErrorMessage{Param: "LineId", Message: "This field is required"}
 	nameValidateError   = validate_err_msg.ErrorMessage{Param: "Name", Message: "This field is required"}
@@ -31,36 +32,47 @@ var (
 
 var (
 	repoFirstOrCreateOkArgs = entity.User{
-		LineId:    firstOrCreateOkLineId,
-		Name:      firstOrCreateOkName,
-		AvatarUrl: firstOrCreateOkAvatarUrl,
+		LineId:    okLineId,
+		Name:      okName,
+		AvatarUrl: okAvatarUrl,
 	}
 	repoFirstOrCreateOkReturn = entity.User{
 		Id:        1,
-		LineId:    firstOrCreateOkLineId,
-		Name:      firstOrCreateOkName,
-		AvatarUrl: firstOrCreateOkAvatarUrl,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		DeletedAt: gorm.DeletedAt(nullDeletedAt),
+		LineId:    okLineId,
+		Name:      okName,
+		AvatarUrl: okAvatarUrl,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
+		DeletedAt: nullDeletedAt,
 	}
 
 	repoFirstOrCreateLineIdRequiredFailedArgs = entity.User{
 		LineId:    "",
-		Name:      firstOrCreateOkName,
-		AvatarUrl: firstOrCreateOkAvatarUrl,
+		Name:      okName,
+		AvatarUrl: okAvatarUrl,
 	}
 	repoFirstOrCreateLineIdRequiredError = validate_err_msg.ValidateErrorMessages{
 		lineIdValidateError,
 	}
 
 	repoFirstOrCreateNameRequiredFailedArgs = entity.User{
-		LineId:    firstOrCreateOkLineId,
+		LineId:    okLineId,
 		Name:      "",
-		AvatarUrl: firstOrCreateOkAvatarUrl,
+		AvatarUrl: okAvatarUrl,
 	}
 	repoFirstOrCreateNameRequiredError = validate_err_msg.ValidateErrorMessages{
 		nameValidateError,
+	}
+
+	repoGetOkArg    = "U060d21d2aedb6afeee372d9aba70b1"
+	repoGetOkReturn = entity.User{
+		Id:        1,
+		LineId:    okLineId,
+		Name:      okName,
+		AvatarUrl: okAvatarUrl,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
+		DeletedAt: nullDeletedAt,
 	}
 )
 
@@ -86,6 +98,11 @@ func (s *UserServiceTestSuite) SetupTest() {
 		[]interface{}{repoFirstOrCreateOkArgs.LineId},
 	).Return(nil, repoFirstOrCreateNameRequiredError)
 
+	repo.On("Get",
+		"line_id = ?",
+		[]interface{}{repoGetOkArg},
+	).Return(&repoGetOkReturn, nil)
+
 	s.service = NewService(repo, log.TeeDefault())
 }
 
@@ -108,6 +125,12 @@ func (s *UserServiceTestSuite) TestRegisterOrFindNameFailed() {
 	user, err := s.service.RegisterOrFind(&repoFirstOrCreateNameRequiredFailedArgs)
 	assert.Equal(s.T(), repoFirstOrCreateNameRequiredError, err)
 	assert.Equal(s.T(), nullUser, user)
+}
+
+func (s *UserServiceTestSuite) TestGetOk() {
+	user, err := s.service.GetUserByLineId(repoGetOkArg)
+	assert.Equal(s.T(), nil, err)
+	assert.Equal(s.T(), repoGetOkReturn, *user)
 }
 
 func TestUserServiceTestSuite(t *testing.T) {
