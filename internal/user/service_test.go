@@ -3,6 +3,7 @@ package user
 import (
 	"database/sql"
 	"github.com/ZhuoYIZIA/money-liff-api/internal/entity"
+	"github.com/ZhuoYIZIA/money-liff-api/internal/unity/validate_err_msg"
 	"github.com/ZhuoYIZIA/money-liff-api/pkg/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -18,24 +19,23 @@ type UserServiceTestSuite struct {
 }
 
 var (
-	firstOrCreateOkLineId    string = "first-or-create-ok-line-id"
-	firstOrCreateOkName      string = "first-or-create-ok-name"
+	firstOrCreateOkLineId    string = "U060d21d2aedb6afeee372d9aba70b1"
+	firstOrCreateOkName      string = "TestName"
 	firstOrCreateOkAvatarUrl string = "https://first-or-create-ok-avatar-url"
 
-	//firstOrCreateErrLineId    string = "first-or-create-err-line-id"
-	//firstOrCreateErrName      string = "first-or-create-err-name"
-	//firstOrCreateErrAvatarUrl string = "https://first-or-create-err-avatar-url"
-
 	nullDeletedAt sql.NullTime = sql.NullTime{}
+
+	lineIdValidateError = validate_err_msg.ErrorMessage{Param: "LineId", Message: "This field is required"}
+	//nameValidateError   = validate_err_msg.ErrorMessage{Param: "Name", Message: "This field is required"}
 )
 
 var (
-	userRepoFirstOrCreateOkArgs = entity.User{
+	repoFirstOrCreateOkArgs = entity.User{
 		LineId:    firstOrCreateOkLineId,
 		Name:      firstOrCreateOkName,
 		AvatarUrl: firstOrCreateOkAvatarUrl,
 	}
-	userRepoFirstOrCreateOkReturn = entity.User{
+	repoFirstOrCreateOkReturn = entity.User{
 		Id:        1,
 		LineId:    firstOrCreateOkLineId,
 		Name:      firstOrCreateOkName,
@@ -44,11 +44,16 @@ var (
 		UpdatedAt: time.Now(),
 		DeletedAt: gorm.DeletedAt(nullDeletedAt),
 	}
-	//userRepoFirstOrCreateErrArgs = entity.User{
-	//	LineId:    firstOrCreateErrLineId,
-	//	Name:      firstOrCreateErrName,
-	//	AvatarUrl: firstOrCreateErrAvatarUrl,
-	//}
+
+	repoFirstOrCreateLineIdRequiredFailedArgs = entity.User{
+		LineId:    "",
+		Name:      firstOrCreateOkName,
+		AvatarUrl: firstOrCreateOkAvatarUrl,
+	}
+
+	repoFirstOrCreateLineIdRequiredError = validate_err_msg.ValidateErrorMessages{
+		lineIdValidateError,
+	}
 )
 
 func (s *UserServiceTestSuite) SetupTest() {
@@ -56,24 +61,32 @@ func (s *UserServiceTestSuite) SetupTest() {
 
 	repo.On(
 		"FirstOrCreate",
-		&userRepoFirstOrCreateOkArgs,
+		&repoFirstOrCreateOkArgs,
 		"line_id = ?",
-		[]interface{}{userRepoFirstOrCreateOkArgs.LineId},
-	).Return(&userRepoFirstOrCreateOkReturn, nil)
+		[]interface{}{repoFirstOrCreateOkArgs.LineId},
+	).Return(&repoFirstOrCreateOkReturn, nil)
 
-	//repo.On("FirstOrCreate",
-	//	&userRepoFirstOrCreateErrArgs,
-	//	"line-id = ?",
-	//	userRepoFirstOrCreateErrArgs.LineId,
-	//).Return(&userRepoFirstOrCreateOkReturn, nil)
+	repo.On("FirstOrCreate",
+		&repoFirstOrCreateLineIdRequiredFailedArgs,
+		"line-id = ?",
+		[]interface{}{repoFirstOrCreateOkArgs.LineId},
+	).Return(nil, repoFirstOrCreateLineIdRequiredError)
 
 	s.service = NewService(repo, log.TeeDefault())
 }
 
 func (s *UserServiceTestSuite) TestRegisterOrFindOk() {
-	user, err := s.service.RegisterOrFind(&userRepoFirstOrCreateOkArgs)
-	assert.Equal(s.T(), err, nil)
-	assert.Equal(s.T(), *user, userRepoFirstOrCreateOkReturn)
+	user, err := s.service.RegisterOrFind(&repoFirstOrCreateOkArgs)
+	assert.Equal(s.T(), nil, err)
+	assert.Equal(s.T(), repoFirstOrCreateOkReturn, *user)
+
+}
+
+func (s *UserServiceTestSuite) TestRegisterOrFindLineIdFailed() {
+	var nullUser *entity.User
+	user, err := s.service.RegisterOrFind(&repoFirstOrCreateLineIdRequiredFailedArgs)
+	assert.Equal(s.T(), repoFirstOrCreateLineIdRequiredError, err)
+	assert.Equal(s.T(), nullUser, user)
 }
 
 func TestUserServiceTestSuite(t *testing.T) {
