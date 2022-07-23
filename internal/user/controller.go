@@ -37,12 +37,13 @@ func (r *Resource) GetUserOrRegister(c *gin.Context) {
 		log.String("name", user.Name),
 		log.String("avatar url", user.AvatarUrl))
 
-	if err := r.service.CreateIfNotFound(&user); err != nil {
+	userResult, err := r.service.RegisterOrFind(&user)
+	if err != nil {
 		res := exception.InternalServerError("")
 		c.JSON(http.StatusInternalServerError, res)
 		return
 	} else {
-		res := response.Ok("", user)
+		res := response.Ok("", userResult)
 		c.JSON(http.StatusOK, res)
 		return
 	}

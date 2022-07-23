@@ -10,7 +10,7 @@ import (
 type Repository interface {
 	Get(where string, args ...interface{}) (*entity.User, error)
 	Create(user *entity.User) error
-	FirstOrCreate(user *entity.User) error
+	FirstOrCreate(user *entity.User, where string, args ...interface{}) (*entity.User, error)
 	Update(user *entity.User) error
 }
 
@@ -46,12 +46,12 @@ func (r *repository) Create(user *entity.User) error {
 	return nil
 }
 
-func (r *repository) FirstOrCreate(user *entity.User) error {
-	if err := r.db.Where(entity.User{LineId: user.LineId}).FirstOrCreate(user).Error; err != nil {
+func (r *repository) FirstOrCreate(user *entity.User, where string, args ...interface{}) (*entity.User, error) {
+	if err := r.db.Where(where, args).FirstOrCreate(user).Error; err != nil {
 		r.logger.Error("user repo FirstOrCreate err: ", log.Any("err", err))
-		return err
+		return nil, err
 	}
-	return nil
+	return user, nil
 }
 
 func (r *repository) Update(user *entity.User) error {

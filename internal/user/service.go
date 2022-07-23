@@ -6,7 +6,7 @@ import (
 )
 
 type Service interface {
-	CreateIfNotFound(user *entity.User) error
+	RegisterOrFind(user *entity.User) (*entity.User, error)
 	GetUserByLineId(lineId string) (*entity.User, error)
 }
 
@@ -22,8 +22,8 @@ func NewService(repo Repository, logger *log.Logger) Service {
 	}
 }
 
-func (s *service) CreateIfNotFound(user *entity.User) error {
-	return s.repo.FirstOrCreate(user)
+func (s *service) RegisterOrFind(user *entity.User) (*entity.User, error) {
+	return s.repo.FirstOrCreate(user, "line-id = ?", user.LineId)
 }
 
 func (s *service) GetUserByLineId(lineId string) (*entity.User, error) {
