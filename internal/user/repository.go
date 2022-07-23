@@ -11,7 +11,7 @@ type Repository interface {
 	Get(where string, args ...interface{}) (*entity.User, error)
 	Create(user *entity.User) error
 	FirstOrCreate(user *entity.User, where string, args ...interface{}) (*entity.User, error)
-	Update(user *entity.User) error
+	Update(user *entity.User, where string, args ...interface{}) error
 }
 
 type repository struct {
@@ -54,8 +54,8 @@ func (r *repository) FirstOrCreate(user *entity.User, where string, args ...inte
 	return user, nil
 }
 
-func (r *repository) Update(user *entity.User) error {
-	if err := r.db.Model(user).Where("line_id = ?", user.LineId).Updates(user).Error; err != nil {
+func (r *repository) Update(user *entity.User, where string, args ...interface{}) error {
+	if err := r.db.Model(user).Where(where, args).Updates(user).Error; err != nil {
 		r.logger.Error("user repo update err: ", log.Any("err", err))
 		return err
 	}
