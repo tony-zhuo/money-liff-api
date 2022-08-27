@@ -8,6 +8,7 @@ import (
 
 type Middleware interface {
 	AuthCheckMiddleware() func(c *gin.Context)
+	ParamsCheckMiddleware() func(c *gin.Context)
 }
 
 type middleware struct {
