@@ -7,8 +7,22 @@ import (
 	"net/http"
 )
 
+type Middleware interface {
+	ParamsCheckMiddleware() func(c *gin.Context)
+}
+
+type middleware struct {
+	groupService Service
+}
+
+func NewMiddleware(groupService Service) Middleware {
+	return &middleware{
+		groupService: groupService,
+	}
+}
+
 // ParamsCheckMiddleware check group uuid exit
-func ParamsCheckMiddleware(service Service) func(c *gin.Context) {
+func (m *middleware) ParamsCheckMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		groupUuid := c.Param("group_uuid")
 
@@ -20,7 +34,7 @@ func ParamsCheckMiddleware(service Service) func(c *gin.Context) {
 			return
 		}
 
-		groupData := service.GetGroupByUUID(groupUuid)
+		groupData := m.groupService.GetGroupByUUID(groupUuid)
 		if groupData == nil {
 			res := exception.NotFound("Group not found.")
 			c.JSON(http.StatusNotFound, res)

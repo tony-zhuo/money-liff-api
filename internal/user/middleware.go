@@ -6,7 +6,21 @@ import (
 	"net/http"
 )
 
-func AuthCheckMiddleware(userService Service) func(c *gin.Context) {
+type Middleware interface {
+	AuthCheckMiddleware() func(c *gin.Context)
+}
+
+type middleware struct {
+	userService Service
+}
+
+func NewMiddleware(userService Service) Middleware {
+	return &middleware{
+		userService: userService,
+	}
+}
+
+func (m *middleware) AuthCheckMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		lineId := c.GetHeader("Line-Id")
 
@@ -17,7 +31,7 @@ func AuthCheckMiddleware(userService Service) func(c *gin.Context) {
 			return
 		}
 
-		userData, err := userService.GetUserByLineId(lineId)
+		userData, err := m.userService.GetUserByLineId(lineId)
 		if err != nil {
 			res := exception.InternalServerError("")
 			c.JSON(http.StatusInternalServerError, res)
@@ -36,11 +50,11 @@ func AuthCheckMiddleware(userService Service) func(c *gin.Context) {
 	}
 }
 
-func ParamsCheckMiddleware(userService Service) func(c *gin.Context) {
+func (m *middleware) ParamsCheckMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		lineId := c.Param("user_uuid")
 
-		userData, err := userService.GetUserByLineId(lineId)
+		userData, err := m.userService.GetUserByLineId(lineId)
 		if err != nil {
 			res := exception.InternalServerError("")
 			c.JSON(http.StatusInternalServerError, res)
