@@ -38,3 +38,18 @@
 - 新增行程（未完成）
 - 編輯行程（未完成）
 - 刪除行程（未完成）
+
+# 安裝教學
+1. env setting
+copy env file and add database username and password in env file.
+```shell
+cp .env.example .env
+```
+2. migration
+```shell
+make migrate
+```
+3. run server
+```shell
+make run
+```
