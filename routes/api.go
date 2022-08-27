@@ -31,6 +31,7 @@ func InitRoutes() *gin.Engine {
 
 	userCtr := user.NewController(userService, logger)
 	groupCtr := group.NewController(groupService, logger)
+	uploadCtr := upload.NewController(uploadService, logger)
 	costCtr := cost.NewController(costService, logger)
 
 	groupMiddleware := group.NewMiddleware(groupService)
@@ -38,14 +39,14 @@ func InitRoutes() *gin.Engine {
 
 	userRoute := user.NewRoute(userCtr, logger)
 	groupRoute := group.NewRoute(groupCtr, userMiddleware, groupMiddleware, logger)
+	uploadRoute := upload.NewRoute(uploadCtr, logger)
 	costRoute := cost.NewRoutes(costCtr, groupMiddleware, userMiddleware, logger)
 
 	v1Router := router.Group("v1")
 	{
-		upload.Routes(v1Router, uploadService, logger)
-
 		userRoute.Routes(v1Router)
 		groupRoute.Routes(v1Router)
+		uploadRoute.Routes(v1Router)
 		costRoute.Routes(v1Router)
 	}
 
