@@ -10,12 +10,23 @@ import (
 	"net/http"
 )
 
-type Resource struct {
-	service Service
-	logger  *log.Logger
+type Controller interface {
+	GetUserOrRegister(c *gin.Context)
 }
 
-func (r *Resource) GetUserOrRegister(c *gin.Context) {
+type controller struct {
+	userService Service
+	logger      *log.Logger
+}
+
+func NewController(userService Service, logger *log.Logger) Controller {
+	return &controller{
+		userService: userService,
+		logger:      logger,
+	}
+}
+
+func (ctr *controller) GetUserOrRegister(c *gin.Context) {
 	user := entity.User{}
 	if err := c.Bind(&user); err != nil {
 		errMsg := validate_err_msg.Transfer(err).Error()
@@ -24,12 +35,12 @@ func (r *Resource) GetUserOrRegister(c *gin.Context) {
 		return
 	}
 
-	r.logger.Info("user register API request data",
+	ctr.logger.Info("user register API request data",
 		log.String("line id", user.LineId),
 		log.String("name", user.Name),
 		log.String("avatar url", user.AvatarUrl))
 
-	userResult, err := r.service.RegisterOrFind(&user)
+	userResult, err := ctr.userService.RegisterOrFind(&user)
 	if err != nil {
 		res := exception.InternalServerError(err.Error())
 		c.JSON(http.StatusInternalServerError, res)
