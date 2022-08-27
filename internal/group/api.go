@@ -6,45 +6,64 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Routes(route *gin.RouterGroup, groupService Service, userService user.Service, logger *log.Logger) {
-	resource := Resource{service: groupService, logger: logger}
+type Route interface {
+	Routes(route *gin.RouterGroup)
+}
+
+type route struct {
+	groupController Controller
+	userMiddleware  user.Middleware
+	groupMiddleware Middleware
+	logger          *log.Logger
+}
+
+func NewRoute(groupController Controller, userMiddleware user.Middleware, groupMiddleware Middleware, logger *log.Logger) Route {
+	return &route{
+		groupController: groupController,
+		userMiddleware:  userMiddleware,
+		groupMiddleware: groupMiddleware,
+		logger:          logger,
+	}
+}
+
+func (r *route) Routes(route *gin.RouterGroup) {
 
 	route.GET("/group",
-		user.AuthCheckMiddleware(userService),
-		resource.Index)
+		r.userMiddleware.AuthCheckMiddleware(),
+		r.groupController.Index)
 
 	route.GET("/group/:group_uuid",
-		user.AuthCheckMiddleware(userService),
-		ParamsCheckMiddleware(groupService),
-		resource.Show)
+		r.userMiddleware.AuthCheckMiddleware(),
+		r.groupMiddleware.ParamsCheckMiddleware(),
+		r.groupController.Show)
 
 	route.POST("/group",
-		user.AuthCheckMiddleware(userService),
-		resource.Create)
+		r.userMiddleware.AuthCheckMiddleware(),
+		r.groupController.Create)
 
 	route.PUT("/group/:group_uuid",
-		user.AuthCheckMiddleware(userService),
-		ParamsCheckMiddleware(groupService),
-		resource.Update)
+		r.userMiddleware.AuthCheckMiddleware(),
+		r.groupMiddleware.ParamsCheckMiddleware(),
+		r.groupController.Update)
 
 	route.DELETE("/group/:group_uuid",
-		user.AuthCheckMiddleware(userService),
-		ParamsCheckMiddleware(groupService),
-		resource.Delete)
+		r.userMiddleware.AuthCheckMiddleware(),
+		r.groupMiddleware.ParamsCheckMiddleware(),
+		r.groupController.Delete)
 
 	route.GET("/group/:group_uuid/user",
-		user.AuthCheckMiddleware(userService),
-		ParamsCheckMiddleware(groupService),
-		resource.UserList)
+		r.userMiddleware.AuthCheckMiddleware(),
+		r.groupMiddleware.ParamsCheckMiddleware(),
+		r.groupController.UserList)
 
 	route.POST("/group/:group_uuid/user",
-		user.AuthCheckMiddleware(userService),
-		ParamsCheckMiddleware(groupService),
-		resource.Join)
+		r.userMiddleware.AuthCheckMiddleware(),
+		r.groupMiddleware.ParamsCheckMiddleware(),
+		r.groupController.Join)
 
 	route.DELETE("/group/:group_uuid/user/:user_uuid",
-		user.AuthCheckMiddleware(userService),
-		user.ParamsCheckMiddleware(userService),
-		ParamsCheckMiddleware(groupService),
-		resource.DeleteUserInGroup)
+		r.userMiddleware.AuthCheckMiddleware(),
+		r.userMiddleware.ParamsCheckMiddleware(),
+		r.groupMiddleware.ParamsCheckMiddleware(),
+		r.groupController.DeleteUserInGroup)
 }

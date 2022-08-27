@@ -8,16 +8,27 @@ import (
 	"net/http"
 )
 
-type Resource struct {
-	service Service
-	logger  *log.Logger
+type Controller interface {
+	UploadImage(c *gin.Context)
 }
 
-func (r *Resource) UploadImage(c *gin.Context) {
+type controller struct {
+	uploadService Service
+	logger        *log.Logger
+}
+
+func NewController(uploadService Service, logger *log.Logger) Controller {
+	return &controller{
+		uploadService: uploadService,
+		logger:        logger,
+	}
+}
+
+func (ctr *controller) UploadImage(c *gin.Context) {
 	file, _ := c.FormFile("file")
 	category := c.PostForm("category")
 
-	filePath, err := r.service.UploadImageAndGetPath(file, category)
+	filePath, err := ctr.uploadService.UploadImageAndGetPath(file, category)
 	if err != nil {
 		res := exception.InternalServerError(err.Error())
 		c.JSON(http.StatusInternalServerError, res)

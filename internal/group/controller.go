@@ -10,12 +10,30 @@ import (
 	"strconv"
 )
 
-type Resource struct {
-	service Service
-	logger  *log.Logger
+type Controller interface {
+	Index(c *gin.Context)
+	Show(c *gin.Context)
+	Create(c *gin.Context)
+	Update(c *gin.Context)
+	Delete(c *gin.Context)
+	UserList(c *gin.Context)
+	Join(c *gin.Context)
+	DeleteUserInGroup(c *gin.Context)
 }
 
-func (r *Resource) Index(c *gin.Context) {
+type controller struct {
+	groupService Service
+	logger       *log.Logger
+}
+
+func NewController(groupService Service, logger *log.Logger) Controller {
+	return &controller{
+		groupService: groupService,
+		logger:       logger,
+	}
+}
+
+func (ctr *controller) Index(c *gin.Context) {
 	auth := c.MustGet("auth").(*entity.User)
 	queryPage := c.DefaultQuery("page", "1")
 	queryPerPage := c.DefaultQuery("per_page", "10")
@@ -23,7 +41,7 @@ func (r *Resource) Index(c *gin.Context) {
 	page, _ := strconv.ParseInt(queryPage, 10, 32)
 	perPage, _ := strconv.ParseInt(queryPerPage, 10, 32)
 
-	pagination, err := r.service.GetListByUserWithPagination(auth, int(page), int(perPage), sort)
+	pagination, err := ctr.groupService.GetListByUserWithPagination(auth, int(page), int(perPage), sort)
 	if err != nil {
 		res := exception.InternalServerError(err.Error())
 		c.JSON(http.StatusInternalServerError, res)
@@ -35,24 +53,24 @@ func (r *Resource) Index(c *gin.Context) {
 	}
 }
 
-func (r *Resource) Show(c *gin.Context) {
+func (ctr *controller) Show(c *gin.Context) {
 	groupData := c.MustGet("groupData").(*entity.Group)
 	auth := c.MustGet("auth").(*entity.User)
 
-	result, err := r.service.GetGroupWithCostItemInfo(auth, groupData)
+	result, err := ctr.groupService.GetGroupWithCostItemInfo(auth, groupData)
 	if err != nil {
 		res := exception.InternalServerError("")
 		c.JSON(http.StatusInternalServerError, res)
 		return
 	}
-	r.logger.Info("Show 4")
+	ctr.logger.Info("Show 4")
 
 	res := response.Ok("", result)
 	c.JSON(http.StatusOK, res)
 	return
 }
 
-func (r *Resource) Create(c *gin.Context) {
+func (ctr *controller) Create(c *gin.Context) {
 	auth := c.MustGet("auth").(*entity.User)
 
 	group := entity.Group{}
@@ -62,7 +80,7 @@ func (r *Resource) Create(c *gin.Context) {
 		return
 	}
 
-	r.logger.Info("group create request bind",
+	ctr.logger.Info("group create request bind",
 		log.String("Name", group.Name),
 		log.Int("UserLimit", group.UserLimit),
 		log.String("ImageUrl", group.ImageUrl))
@@ -73,7 +91,7 @@ func (r *Resource) Create(c *gin.Context) {
 		return
 	}
 
-	if err := r.service.GenerateUUIDAndCreateByUser(&group, auth); err != nil {
+	if err := ctr.groupService.GenerateUUIDAndCreateByUser(&group, auth); err != nil {
 		res := exception.InternalServerError(err.Error())
 		c.JSON(http.StatusInternalServerError, res)
 		return
@@ -85,11 +103,11 @@ func (r *Resource) Create(c *gin.Context) {
 
 }
 
-func (r *Resource) Update(c *gin.Context) {
+func (ctr *controller) Update(c *gin.Context) {
 	auth := c.MustGet("auth").(*entity.User)
 	groupData := c.MustGet("groupData").(*entity.Group)
 	groupUuid := c.Param("group_uuid")
-	r.logger.Info("Group update controller",
+	ctr.logger.Info("Group update controller",
 		log.String("line-id", auth.LineId),
 		log.String("group_uuid", groupUuid))
 
@@ -106,13 +124,13 @@ func (r *Resource) Update(c *gin.Context) {
 		return
 	}
 
-	if isAdmin := r.service.CheckUserIsAdmin(groupData, auth); !isAdmin {
+	if isAdmin := ctr.groupService.CheckUserIsAdmin(groupData, auth); !isAdmin {
 		res := exception.Unauthorized("The user is not admin.")
 		c.JSON(http.StatusUnauthorized, res)
 		return
 	}
 
-	if err := r.service.UpdateGroupById(&request, groupData.Id); err != nil {
+	if err := ctr.groupService.UpdateGroupById(&request, groupData.Id); err != nil {
 		res := exception.InternalServerError("")
 		c.JSON(http.StatusInternalServerError, res)
 		return
@@ -128,21 +146,21 @@ func (r *Resource) Update(c *gin.Context) {
 	}
 }
 
-func (r *Resource) Delete(c *gin.Context) {
+func (ctr *controller) Delete(c *gin.Context) {
 	auth := c.MustGet("auth").(*entity.User)
 	groupData := c.MustGet("groupData").(*entity.Group)
 	groupUuid := c.Param("group_uuid")
-	r.logger.Info("Group update controller",
+	ctr.logger.Info("Group update controller",
 		log.String("line-id", auth.LineId),
 		log.String("group_uuid", groupUuid))
 
-	if isAdmin := r.service.CheckUserIsAdmin(groupData, auth); !isAdmin {
+	if isAdmin := ctr.groupService.CheckUserIsAdmin(groupData, auth); !isAdmin {
 		res := exception.Unauthorized("The user is not admin.")
 		c.JSON(http.StatusUnauthorized, res)
 		return
 	}
 
-	if err := r.service.DeleteGroupById(groupData.Id); err != nil {
+	if err := ctr.groupService.DeleteGroupById(groupData.Id); err != nil {
 		res := exception.InternalServerError("")
 		c.JSON(http.StatusInternalServerError, res)
 		return
@@ -153,7 +171,7 @@ func (r *Resource) Delete(c *gin.Context) {
 	}
 }
 
-func (r *Resource) UserList(c *gin.Context) {
+func (ctr *controller) UserList(c *gin.Context) {
 	groupData := c.MustGet("groupData").(*entity.Group)
 	queryPage := c.DefaultQuery("page", "1")
 	queryPerPage := c.DefaultQuery("per_page", "10")
@@ -161,7 +179,7 @@ func (r *Resource) UserList(c *gin.Context) {
 	page, _ := strconv.ParseInt(queryPage, 10, 32)
 	perPage, _ := strconv.ParseInt(queryPerPage, 10, 32)
 
-	pagination, err := r.service.GetUserListWithPagination(groupData, int(page), int(perPage), sort)
+	pagination, err := ctr.groupService.GetUserListWithPagination(groupData, int(page), int(perPage), sort)
 	if err != nil {
 		res := exception.InternalServerError(err.Error())
 		c.JSON(http.StatusInternalServerError, res)
@@ -173,11 +191,11 @@ func (r *Resource) UserList(c *gin.Context) {
 	}
 }
 
-func (r *Resource) Join(c *gin.Context) {
+func (ctr *controller) Join(c *gin.Context) {
 	auth := c.MustGet("auth").(*entity.User)
 	groupData := c.MustGet("groupData").(*entity.Group)
 
-	if err := r.service.UserJoinGroup(auth, groupData); err != nil {
+	if err := ctr.groupService.UserJoinGroup(auth, groupData); err != nil {
 		res := exception.InternalServerError(err.Error())
 		c.JSON(http.StatusInternalServerError, res)
 		return
@@ -188,11 +206,11 @@ func (r *Resource) Join(c *gin.Context) {
 	}
 }
 
-func (r *Resource) DeleteUserInGroup(c *gin.Context) {
+func (ctr *controller) DeleteUserInGroup(c *gin.Context) {
 	groupData := c.MustGet("groupData").(*entity.Group)
 	userData := c.MustGet("userData").(*entity.User)
 
-	if err := r.service.DeleteUserInGroup(groupData, userData); err != nil {
+	if err := ctr.groupService.DeleteUserInGroup(groupData, userData); err != nil {
 		res := exception.InternalServerError(err.Error())
 		c.JSON(http.StatusInternalServerError, res)
 		return

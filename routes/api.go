@@ -23,17 +23,31 @@ func InitRoutes() *gin.Engine {
 
 	logger := log.TeeDefault()
 	db := database.Connection()
+
 	userService := user.NewService(user.NewRepository(db, logger), logger)
 	groupService := group.NewService(group.NewRepository(db, logger), logger)
 	uploadService := upload.NewService(logger)
 	costService := cost.NewService(cost.NewRepository(db, logger), logger)
 
+	userCtr := user.NewController(userService, logger)
+	groupCtr := group.NewController(groupService, logger)
+	uploadCtr := upload.NewController(uploadService, logger)
+	costCtr := cost.NewController(costService, logger)
+
+	groupMiddleware := group.NewMiddleware(groupService)
+	userMiddleware := user.NewMiddleware(userService)
+
+	userRoute := user.NewRoute(userCtr, logger)
+	groupRoute := group.NewRoute(groupCtr, userMiddleware, groupMiddleware, logger)
+	uploadRoute := upload.NewRoute(uploadCtr, logger)
+	costRoute := cost.NewRoutes(costCtr, groupMiddleware, userMiddleware, logger)
+
 	v1Router := router.Group("v1")
 	{
-		user.Routes(v1Router, userService, logger)
-		group.Routes(v1Router, groupService, userService, logger)
-		upload.Routes(v1Router, uploadService, logger)
-		cost.Routes(v1Router, costService, groupService, userService, logger)
+		userRoute.Routes(v1Router)
+		groupRoute.Routes(v1Router)
+		uploadRoute.Routes(v1Router)
+		costRoute.Routes(v1Router)
 	}
 
 	return router

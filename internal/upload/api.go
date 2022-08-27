@@ -5,8 +5,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Routes(route *gin.RouterGroup, uploadService Service, logger *log.Logger) {
-	resource := Resource{service: uploadService, logger: logger}
+type Route interface {
+	Routes(route *gin.RouterGroup)
+}
 
-	route.POST("/upload/image", resource.UploadImage)
+type route struct {
+	uploadController Controller
+	logger           *log.Logger
+}
+
+func NewRoute(uploadController Controller, logger *log.Logger) Route {
+	return &route{
+		uploadController: uploadController,
+		logger:           logger,
+	}
+}
+
+func (r *route) Routes(route *gin.RouterGroup) {
+	route.POST("/upload/image", r.uploadController.UploadImage)
 }
