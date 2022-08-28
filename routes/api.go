@@ -7,6 +7,7 @@ import (
 	"github.com/ZhuoYIZIA/money-liff-api/internal/user"
 	"github.com/ZhuoYIZIA/money-liff-api/pkg/database"
 	"github.com/ZhuoYIZIA/money-liff-api/pkg/log"
+	"github.com/ZhuoYIZIA/money-liff-api/pkg/storage"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -23,10 +24,11 @@ func InitRoutes() *gin.Engine {
 
 	logger := log.TeeDefault()
 	db := database.Connection()
+	store := storage.NewStorage()
 
 	userService := user.NewService(user.NewRepository(db, logger), logger)
 	groupService := group.NewService(group.NewRepository(db, logger), logger)
-	uploadService := upload.NewService(logger)
+	uploadService := upload.NewService(logger, store)
 	costService := cost.NewService(cost.NewRepository(db, logger), logger)
 
 	userCtr := user.NewController(userService, logger)
