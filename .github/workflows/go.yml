@@ -2,9 +2,7 @@ name: Go
 
 on:
   push:
-    branches: [ "main", "develop" ]
-  pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "develop" ]
 
 env:
   IMAGE_NAME: money-liff
