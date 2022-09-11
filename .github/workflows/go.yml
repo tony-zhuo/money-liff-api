@@ -11,6 +11,7 @@ env:
 jobs:
 
   build-image:
+    name: Build Docker Image
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
     steps:
@@ -40,6 +41,7 @@ jobs:
         path: liff.tar
 
   tests:
+    name: Testing
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -53,6 +55,7 @@ jobs:
         run: go test -cover -v ./...
 
   push-image-to-docker-hub:
+    name: Push image to docker hub
     needs: [ build-image, tests ]
     environment: ${{ github.ref_name }}
     runs-on: ubuntu-latest
