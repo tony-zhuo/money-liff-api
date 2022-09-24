@@ -3,7 +3,7 @@ version: "3.9"
 networks:
   backend:
     driver: bridge
-    name: ${DOCKER_NETWORK}
+    name: money-liff_backend
 
 volumes:
   postgres:
