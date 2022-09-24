@@ -31,7 +31,7 @@ services:
     image: postgres:14.2-alpine
     container_name: money-liff-postgres
     ports:
-      - "15432:5432"
+      - "15432:${DB_PORT}"
     environment:
       - POSTGRES_USER=${DB_USERNAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
