@@ -10,40 +10,6 @@ env:
 
 jobs:
 
-  build-image:
-    name: Build Docker Image
-    runs-on: ubuntu-latest
-    environment: ${{ github.ref_name }}
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: 1.18
-
-    - name: Make env file
-      uses: SpicyPizza/create-envfile@v1.3
-      with:
-        envkey_APP_ENV: ${{ github.ref_name }}
-        envkey_DB_HOST: ${{ secrets.DB_HOST }}
-        envkey_DB_PORT: ${{ secrets.DB_PORT }}
-        envkey_DB_DATABASE: ${{ secrets.DB_DATABASE }}
-        envkey_DB_USERNAME: ${{ secrets.DB_USERNAME }}
-        envkey_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-
-    - name: Build image
-      run: docker build -t tonyzhuo/$IMAGE_NAME:$RELEASE_VERSION .
-
-    - name: Save docker image as tar file
-      run: docker save tonyzhuo/$IMAGE_NAME:$RELEASE_VERSION > liff.tar
-
-    - name: Upload tar file to github artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: backend-artifact
-        path: liff.tar
-
   tests:
     name: Testing
     runs-on: ubuntu-latest
@@ -58,9 +24,84 @@ jobs:
       - name: Test
         run: go test -cover -v ./...
 
+  build-image:
+    name: Build Docker Image
+    needs: [ tests ]
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Make env file
+      uses: SpicyPizza/create-envfile@v1.3
+      with:
+        envkey_DEBUG: false
+        envkey_APP_ENV: ${{ github.ref_name }}
+        envkey_DB_HOST: ${{ secrets.DB_HOST }}
+        envkey_DB_PORT: ${{ secrets.DB_PORT }}
+        envkey_DB_DATABASE: ${{ secrets.DB_DATABASE }}
+        envkey_DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        envkey_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        file_name: .env
+        fail_on_empty: false
+
+    - name: Build image
+      run: docker build -t tonyzhuo/$IMAGE_NAME:$RELEASE_VERSION .
+
+    - name: Save docker image as tar file
+      run: docker save tonyzhuo/$IMAGE_NAME:$RELEASE_VERSION > liff.tar
+
+    - name: Upload tar file to github artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: backend-artifact
+        path: liff.tar
+
+
+  migrate:
+    name: DB migration
+    needs: [ build-image ]
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    env:
+      MIGRATE_DSN: postgres://${{ secrets.DB_USERNAME }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:${{ secrets.DB_PORT }}/${{ secrets.DB_DATABASE }}?sslmode=disable
+    steps:
+      - uses: actions/checkout@v3
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v0'
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+      - name: Install cloud sql proxy
+        run: |
+          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+          chmod +x cloud_sql_proxy
+
+      - name: Install golang-migrate cli
+        run: |
+          sudo curl -L https://packagecloud.io/golang-migrate/migrate/gpgkey | sudo apt-key add -
+          sudo su -c "echo 'deb https://packagecloud.io/golang-migrate/migrate/ubuntu/ $(lsb_release -sc) main' > /etc/apt/sources.list.d/migrate.list"
+          sudo apt-get update
+          sudo apt-get install -y migrate
+
+      - name: Create Cloud sql proxy connection
+        run: |
+          ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUD_SQL_DB_INSTANCES }}=tcp:${{ secrets.DB_PORT }} &
+
+      - name: Run migrations
+        run: |
+          migrate -source github://tony-zhuo/money-liff-api/migrations#${{ github.ref_name }} -database $MIGRATE_DSN up
+
   push-image-to-docker-hub:
     name: Push image to docker hub
-    needs: [ build-image, tests ]
+    needs: [ build-image ]
     environment: ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
@@ -80,3 +121,24 @@ jobs:
 
       - name: Push docker image to Docker Hub
         run: docker push tonyzhuo/$IMAGE_NAME:$RELEASE_VERSION
+
+#  deploy:
+#    name: Deploy image to cloud run
+#    needs: [ push-image-to-docker-hub ]
+#    environment: ${{ github.ref_name }}
+#    runs-on: ubuntu-latest
+#    steps:
+#      - id: 'auth'
+#        uses: 'google-github-actions/auth@v0'
+#        with:
+#          workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+#          service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+#
+#      - id: 'deploy'
+#        uses: 'google-github-actions/deploy-cloudrun@v0'
+#        with:
+#          service: 'hello-cloud-run'
+#          image: 'gcr.io/cloudrun/hello'
+#
+#      - name: 'Use output'
+#        run: 'curl "${{ steps.deploy.outputs.url }}"'
