@@ -11,6 +11,7 @@ env:
 jobs:
 
   build-image:
+    name: Build Docker Image
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
     steps:
@@ -21,11 +22,15 @@ jobs:
       with:
         go-version: 1.18
 
-    - name: set env file
-      run: |
-        cp .env.example .env
-        sed -i "s/APP_ENV=*/APP_ENV=${{ github.ref_name }}/g" .env
-        cat .env
+    - name: Make env file
+      uses: SpicyPizza/create-envfile@v1.3
+      with:
+        envkey_APP_ENV: ${{ github.ref_name }}
+        envkey_DB_HOST: ${{ secrets.DB_HOST }}
+        envkey_DB_PORT: ${{ secrets.DB_PORT }}
+        envkey_DB_DATABASE: ${{ secrets.DB_DATABASE }}
+        envkey_DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        envkey_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
     - name: Build image
       run: docker build -t tonyzhuo/$IMAGE_NAME:$RELEASE_VERSION .
@@ -40,6 +45,7 @@ jobs:
         path: liff.tar
 
   tests:
+    name: Testing
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -53,6 +59,7 @@ jobs:
         run: go test -cover -v ./...
 
   push-image-to-docker-hub:
+    name: Push image to docker hub
     needs: [ build-image, tests ]
     environment: ${{ github.ref_name }}
     runs-on: ubuntu-latest

@@ -1,7 +1,7 @@
 include .env
 export
 APP_DSN := postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=disable
-MIGRATE := docker run -v $(shell pwd)/migrations:/migrations --network ${DOCKER_NETWORK} migrate/migrate -path=/migrations/ -database "$(APP_DSN)"
+MIGRATE := docker run --rm -v $(shell pwd)/migrations:/migrations --name money-liff-migrate --network money-liff_backend migrate/migrate -path=/migrations/ -database "$(APP_DSN)"
 
 run:
 	@echo "Running go..."
@@ -32,3 +32,8 @@ migrate-reset: ## reset database and re-run all migrations
 	@$(MIGRATE) drop
 	@echo "Running all database migrations..."
 	@$(MIGRATE) up
+
+.PHONY: migrate-install
+migrate-install:
+	@echo "installing golang-migrate..."
+	@brew install golang-migrate
