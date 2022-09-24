@@ -32,9 +32,6 @@ jobs:
         envkey_DB_USERNAME: ${{ secrets.DB_USERNAME }}
         envkey_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
-    - name: Show env file
-      run: cat .env
-
     - name: Build image
       run: docker build -t tonyzhuo/$IMAGE_NAME:$RELEASE_VERSION .
 
