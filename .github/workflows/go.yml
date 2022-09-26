@@ -99,7 +99,7 @@ jobs:
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v0'
         with:
-          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+          credentials_json: '${{ secrets.GCP_CLOUD_SQL_CREDENTIALS }}'
 
       - name: Install cloud sql proxy
         run: |
@@ -131,7 +131,7 @@ jobs:
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v0'
         with:
-          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+          credentials_json: '${{ secrets.GCP_CLOUD_RUN_CREDENTIALS }}'
 
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloudrun@v0'
