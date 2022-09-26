@@ -85,41 +85,41 @@ jobs:
       - name: Push docker image to Docker Hub
         run: docker push tonyzhuo/$PROJECT_NAME:$RELEASE_VERSION
 
-  migrate:
-    name: DB migration
-    needs: [ push-image-to-docker-hub ]
-    runs-on: ubuntu-latest
-    environment: ${{ github.ref_name }}
-    env:
-      MIGRATE_DSN: postgres://${{ secrets.DB_USERNAME }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:${{ secrets.DB_PORT }}/${{ secrets.DB_DATABASE }}?sslmode=disable
-    steps:
-      - uses: actions/checkout@v3
-
-      - id: 'auth'
-        name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v0'
-        with:
-          credentials_json: '${{ secrets.GCP_CLOUD_SQL_CREDENTIALS }}'
-
-      - name: Install cloud sql proxy
-        run: |
-          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
-          chmod +x cloud_sql_proxy
-
-      - name: Install golang-migrate cli
-        run: |
-          sudo curl -L https://packagecloud.io/golang-migrate/migrate/gpgkey | sudo apt-key add -
-          sudo su -c "echo 'deb https://packagecloud.io/golang-migrate/migrate/ubuntu/ $(lsb_release -sc) main' > /etc/apt/sources.list.d/migrate.list"
-          sudo apt-get update
-          sudo apt-get install -y migrate
-
-      - name: Create Cloud sql proxy connection
-        run: |
-          ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUD_SQL_DB_INSTANCES }}=tcp:${{ secrets.DB_PORT }} &
-
-      - name: Run migrations
-        run: |
-          migrate -source github://tony-zhuo/money-liff-api/migrations#${{ github.ref_name }} -database $MIGRATE_DSN up
+#  migrate:
+#    name: DB migration
+#    needs: [ push-image-to-docker-hub ]
+#    runs-on: ubuntu-latest
+#    environment: ${{ github.ref_name }}
+#    env:
+#      MIGRATE_DSN: postgres://${{ secrets.DB_USERNAME }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:${{ secrets.DB_PORT }}/${{ secrets.DB_DATABASE }}?sslmode=disable
+#    steps:
+#      - uses: actions/checkout@v3
+#
+#      - id: 'auth'
+#        name: 'Authenticate to Google Cloud'
+#        uses: 'google-github-actions/auth@v0'
+#        with:
+#          credentials_json: '${{ secrets.GCP_CLOUD_SQL_CREDENTIALS }}'
+#
+#      - name: Install cloud sql proxy
+#        run: |
+#          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+#          chmod +x cloud_sql_proxy
+#
+#      - name: Install golang-migrate cli
+#        run: |
+#          sudo curl -L https://packagecloud.io/golang-migrate/migrate/gpgkey | sudo apt-key add -
+#          sudo su -c "echo 'deb https://packagecloud.io/golang-migrate/migrate/ubuntu/ $(lsb_release -sc) main' > /etc/apt/sources.list.d/migrate.list"
+#          sudo apt-get update
+#          sudo apt-get install -y migrate
+#
+#      - name: Create Cloud sql proxy connection
+#        run: |
+#          ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUD_SQL_DB_INSTANCES }}=tcp:${{ secrets.DB_PORT }} &
+#
+#      - name: Run migrations
+#        run: |
+#          migrate -source github://tony-zhuo/money-liff-api/migrations#${{ github.ref_name }} -database $MIGRATE_DSN up
 
   deploy:
     name: Deploy image to cloud run
@@ -142,8 +142,10 @@ jobs:
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloudrun@v0'
         with:
+          region: 'us-central1'
           service: 'money-liff-api'
           image: 'tonyzhuo/$PROJECT_NAME:$RELEASE_VERSION'
+          credentials_json: '${{ secrets.GCP_CLOUD_RUN_CREDENTIALS }}'
 
       - name: 'Use output'
         run: 'curl "${{ steps.deploy.outputs.url }}"'
