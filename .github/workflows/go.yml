@@ -5,7 +5,7 @@ on:
     branches: [ "develop" ]
 
 env:
-  IMAGE_NAME: money-liff
+  PROJECT_NAME: money-liff
   RELEASE_VERSION: ${{ github.ref_name }}
 
 jobs:
@@ -51,10 +51,10 @@ jobs:
         fail_on_empty: false
 
     - name: Build image
-      run: docker build -t tonyzhuo/$IMAGE_NAME:$RELEASE_VERSION .
+      run: docker build -t tonyzhuo/$PROJECT_NAME:$RELEASE_VERSION .
 
     - name: Save docker image as tar file
-      run: docker save tonyzhuo/$IMAGE_NAME:$RELEASE_VERSION > liff.tar
+      run: docker save tonyzhuo/$PROJECT_NAME:$RELEASE_VERSION > liff.tar
 
     - name: Upload tar file to github artifact
       uses: actions/upload-artifact@v3
@@ -83,7 +83,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push docker image to Docker Hub
-        run: docker push tonyzhuo/$IMAGE_NAME:$RELEASE_VERSION
+        run: docker push tonyzhuo/$PROJECT_NAME:$RELEASE_VERSION
 
   migrate:
     name: DB migration
@@ -143,7 +143,7 @@ jobs:
         uses: 'google-github-actions/deploy-cloudrun@v0'
         with:
           service: 'money-liff-api'
-          image: tonyzhuo/$IMAGE_NAME:$RELEASE_VERSION
+          image: 'tonyzhuo/$PROJECT_NAME:$RELEASE_VERSION'
 
       - name: 'Use output'
         run: 'curl "${{ steps.deploy.outputs.url }}"'
