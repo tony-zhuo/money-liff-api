@@ -7,6 +7,8 @@ on:
 env:
   PROJECT_NAME: money-liff
   RELEASE_VERSION: ${{ github.ref_name }}
+  IMAGE_REGION: us-central1
+  IMAGE_REPO: money-liff
 
 jobs:
 
@@ -62,8 +64,8 @@ jobs:
         name: backend-artifact
         path: liff.tar
 
-  push-image-to-docker-hub:
-    name: Push image to docker hub
+  push-image:
+    name: Push image
     needs: [ build-image ]
     environment: ${{ github.ref_name }}
     runs-on: ubuntu-latest
@@ -76,14 +78,11 @@ jobs:
       - name: Load out docker image
         run: docker load < liff.tar
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Set Artifact Registry config
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
-      - name: Push docker image to Docker Hub
-        run: docker push tonyzhuo/$PROJECT_NAME:$RELEASE_VERSION
+      - name: Tagging image
+        run: docker push $IMAGE_REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/$IMAGE_REPO/$PROJECT_NAME:$RELEASE_VERSION
 
   migrate:
     name: DB migration
@@ -146,8 +145,7 @@ jobs:
         with:
           region: 'us-central1'
           service: 'money-liff-api'
-          image: 'tonyzhuo/$PROJECT_NAME:$RELEASE_VERSION'
-          credentials: '${{ secrets.GCP_CLOUD_RUN_CREDENTIALS }}'
+          image: $IMAGE_REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/$IMAGE_REPO/$PROJECT_NAME:$RELEASE_VERSION
 
 #      - name: 'Use output'
 #        run: 'curl "${{ steps.deploy.outputs.url }}"'
