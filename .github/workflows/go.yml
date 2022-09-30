@@ -86,7 +86,7 @@ jobs:
 
   migrate:
     name: DB migration
-    needs: [ push-image-to-docker-hub ]
+    needs: [ push-image ]
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
     env:
@@ -122,7 +122,7 @@ jobs:
 
   deploy:
     name: Deploy image to cloud run
-    needs: [ push-image-to-docker-hub ]
+    needs: [ push-image ]
     environment: ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
