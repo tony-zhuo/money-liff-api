@@ -149,5 +149,5 @@ jobs:
           image: 'tonyzhuo/$PROJECT_NAME:$RELEASE_VERSION'
           credentials: '${{ secrets.GCP_CLOUD_RUN_CREDENTIALS }}'
 
-      - name: 'Use output'
-        run: 'curl "${{ steps.deploy.outputs.url }}"'
+#      - name: 'Use output'
+#        run: 'curl "${{ steps.deploy.outputs.url }}"'
