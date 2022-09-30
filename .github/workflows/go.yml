@@ -5,10 +5,7 @@ on:
     branches: [ "develop" ]
 
 env:
-  PROJECT_NAME: money-liff
-  RELEASE_VERSION: ${{ github.ref_name }}
-  IMAGE_REGION: us-central1
-  IMAGE_REPO: money-liff
+  PROJECT_NAME: money-liff-api
 
 jobs:
 
@@ -26,13 +23,22 @@ jobs:
       - name: Test
         run: go test -cover -v ./...
 
-  build-image:
+  build:
     name: Build Docker Image
     needs: [ tests ]
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
+    outputs:
+      RELEASE_VERSION: ${{ steps.GET_RELEASE_VERSION_STEP.outputs.value }}
+
     steps:
     - uses: actions/checkout@v3
+
+    - name: Set version into environment variable
+      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+    - id: GET_RELEASE_VERSION_STEP
+      run: echo "::set-output name=value::$RELEASE_VERSION"
 
     - name: Set up Go
       uses: actions/setup-go@v3
@@ -52,41 +58,35 @@ jobs:
         file_name: .env
         fail_on_empty: false
 
-    - name: Build image
-      run: docker build -t tonyzhuo/$PROJECT_NAME:$RELEASE_VERSION .
+    - name: Set Artifact Registry config
+      run: sudo gcloud auth configure-docker ${{ secrets.GCP_ARTIFACT_REGION }}-docker.pkg.dev
 
-    - name: Save docker image as tar file
-      run: docker save tonyzhuo/$PROJECT_NAME:$RELEASE_VERSION > liff.tar
-
-    - name: Upload tar file to github artifact
-      uses: actions/upload-artifact@v3
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v0'
       with:
-        name: backend-artifact
-        path: liff.tar
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+        token_format: 'access_token'
 
-  push-image:
-    name: Push image
-    needs: [ build-image ]
-    environment: ${{ github.ref_name }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download image artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: backend-artifact
+    - uses: 'docker/login-action@v1'
+      with:
+        registry: ${{ secrets.GCP_ARTIFACT_REGION }}-docker.pkg.dev
+        username: 'oauth2accesstoken'
+        password: '${{ steps.auth.outputs.access_token }}'
 
-      - name: Load out docker image
-        run: docker load < liff.tar
+    - name: Build image
+      run: |
+        docker build -t $PROJECT_NAME:$RELEASE_VERSION .
 
-      - name: Set Artifact Registry config
-        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+    - name: Push image
+      run: |
+        docker tag $PROJECT_NAME:$RELEASE_VERSION ${{ secrets.GCP_ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY_NAME }}/$PROJECT_NAME:$RELEASE_VERSION
+        docker push ${{ secrets.GCP_ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY_NAME }}/$PROJECT_NAME:$RELEASE_VERSION
 
-      - name: Tagging image
-        run: docker push $IMAGE_REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/$IMAGE_REPO/$PROJECT_NAME:$RELEASE_VERSION
 
   migrate:
     name: DB migration
-    needs: [ push-image ]
+    needs: [ build ]
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
     env:
@@ -98,7 +98,7 @@ jobs:
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v0'
         with:
-          credentials_json: '${{ secrets.GCP_CLOUD_SQL_CREDENTIALS }}'
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
       - name: Install cloud sql proxy
         run: |
@@ -122,30 +122,30 @@ jobs:
 
   deploy:
     name: Deploy image to cloud run
-    needs: [ push-image ]
-    environment: ${{ github.ref_name }}
+    needs: [ build ]
     runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
     steps:
       - uses: actions/checkout@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - id: 'auth'
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v0'
         with:
-          credentials_json: '${{ secrets.GCP_CLOUD_RUN_CREDENTIALS }}'
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          token_format: 'access_token'
+
+      - uses: 'docker/login-action@v1'
+        with:
+          registry: ${{ secrets.GCP_ARTIFACT_REGION }}-docker.pkg.dev
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
 
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloudrun@v0'
         with:
-          region: 'us-central1'
           service: 'money-liff-api'
-          image: $IMAGE_REGION-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/$IMAGE_REPO/$PROJECT_NAME:$RELEASE_VERSION
+          image: ${{ secrets.GCP_ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY_NAME }}/money-liff-api:${{ needs.build.outputs.RELEASE_VERSION }}
 
-#      - name: 'Use output'
-#        run: 'curl "${{ steps.deploy.outputs.url }}"'
+      - name: 'Use output'
+        run: 'curl "${{ steps.deploy.outputs.url }}"'
