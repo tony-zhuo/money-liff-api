@@ -146,7 +146,7 @@ jobs:
         with:
           service: 'money-liff-api'
           image: ${{ secrets.GCP_ARTIFACT_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY_NAME }}/money-liff-api:${{ needs.build.outputs.RELEASE_VERSION }}
-          flags: "--allow-unauthenticated --vpc-connector money-liff-conn --add-cloudsql-instances ['${{ secrets.GCP_CLOUD_SQL_DB_INSTANCES }}']"
+          flags: "--allow-unauthenticated --vpc-connector money-liff-conn --add-cloudsql-instances '${{ secrets.GCP_CLOUD_SQL_DB_INSTANCES }}'"
 
       - name: 'Use output'
         run: 'curl "${{ steps.deploy.outputs.url }}"'
