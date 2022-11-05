@@ -1,9 +1,10 @@
 package user
 
 import (
+	"net/http"
+
 	"github.com/ZhuoYIZIA/money-liff-api/internal/unity/exception"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 type Middleware interface {
